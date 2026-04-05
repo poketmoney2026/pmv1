@@ -56,14 +56,15 @@ export default function DownloadPage() {
     if (downloading) return;
     setDownloading(true);
     try {
-      const a = document.createElement('a');
-      a.href = FILE_PATH;
-      a.download = 'app.apk';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      const link = document.createElement("a");
+      link.href = `${FILE_PATH}?v=static`;
+      link.setAttribute("download", "app.apk");
+      link.setAttribute("target", "_self");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } finally {
-      setDownloading(false);
+      window.setTimeout(() => setDownloading(false), 600);
     }
   };
 
@@ -79,7 +80,7 @@ export default function DownloadPage() {
               </div>
               <div className="text-center">
                 <div className="text-sm font-black">app.apk</div>
-                <div className="mt-1 text-[11px]" style={{ color: pm.fg70 }}>The Android app is loaded from the public apps folder.</div>
+                <div className="mt-1 text-[11px]" style={{ color: pm.fg70 }}>Downloads the fixed public file: /public/apps/app.apk</div>
               </div>
               <button type="button" onClick={handleDownload} disabled={downloading} className="w-full border py-2.5 text-[13px] font-black active:scale-[0.99] disabled:opacity-60" style={{ borderColor: pm.b26, background: pm.b10, color: pm.fg }}>
                 <span className="inline-flex items-center justify-center gap-2">{downloading ? <><Loader2 className="h-4 w-4 animate-spin" />DOWNLOADING...</> : <><Download className="h-4 w-4" />DOWNLOAD APP</>}</span>
