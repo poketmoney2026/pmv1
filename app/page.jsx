@@ -42,6 +42,20 @@ function formatUnits5(units, scale = SCALE) {
   });
 }
 
+function integerDigitsFromFormatted(value) {
+  const raw = String(value ?? "");
+  const intPart = raw.split(".")[0].replace(/,/g, "").replace(/\D/g, "");
+  return Math.max(1, intPart.length);
+}
+
+function getResponsiveOdoSize(value) {
+  const digits = integerDigitsFromFormatted(value);
+  if (digits <= 2) return "clamp(3.4rem,15vw,6.2rem)";
+  if (digits === 3) return "clamp(3rem,13vw,5.5rem)";
+  if (digits === 4) return "clamp(2.55rem,11vw,4.75rem)";
+  return "clamp(2.05rem,9vw,4.1rem)";
+}
+
 function useLiveUnitsOdometer({
   initialUnits = 0,
   unitsPerSecond = 0,
@@ -294,6 +308,11 @@ export default function Dashboard() {
   const formattedTodayIncomeLive = useMemo(
     () => formatUnits5(liveTodayIncomeUnits, SCALE),
     [liveTodayIncomeUnits],
+  );
+
+  const streamFontSize = useMemo(
+    () => getResponsiveOdoSize(formattedStream),
+    [formattedStream],
   );
 
   const [pulseStream, setPulseStream] = useState(0);
@@ -588,8 +607,8 @@ export default function Dashboard() {
             </div>
 
             <div
-              className="mt-2 flex justify-center text-center text-[clamp(3.4rem,15vw,6.2rem)] font-black tabular-nums whitespace-nowrap leading-none"
-              style={{ color: "var(--pm-fg)" }}
+              className="mt-2 flex max-w-full justify-center overflow-hidden text-center font-black tabular-nums whitespace-nowrap leading-none"
+              style={{ color: "var(--pm-fg)", fontSize: streamFontSize }}
             >
               <OdometerText value={formattedStream} pulse={pulseStream} />
             </div>
