@@ -6,7 +6,7 @@ import { Download, Loader2 } from "lucide-react";
 import { FaAndroid } from "react-icons/fa";
 
 const funnelDisplay = Funnel_Display({ subsets: ["latin"], weight: ["400", "700"] });
-const FILE_PATH = "/apps/app.apk";
+const FILE_PATH = "/api/download/app";
 
 function usePM() {
   return useMemo(() => ({
@@ -57,7 +57,7 @@ export default function DownloadPage() {
     setDownloading(true);
     try {
       const link = document.createElement("a");
-      link.href = `${FILE_PATH}?v=static`;
+      link.href = FILE_PATH;
       link.setAttribute("download", "app.apk");
       link.setAttribute("target", "_self");
       document.body.appendChild(link);

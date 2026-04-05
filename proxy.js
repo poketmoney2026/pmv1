@@ -6,7 +6,7 @@ const USER_BASE_ROUTES = ["/", "/user/deposit", "/user/withdraw", "/user/profile
 const ADMIN_BASE_ROUTES = ["/admin/interest", "/admin/addbalance", "/admin/links", "/admin/general", "/admin/withdraws", "/admin/users", "/admin/approve-deposit", "/admin/payment-methods", "/admin/notice", "/admin/live-chat", "/admin/leaderboard"];
 
 function isSkippablePath(pathname) {
-  return pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/assets') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/sitemap.xml';
+  return pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/assets') || pathname.startsWith('/apps') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/sitemap.xml' || /\/[\w.-]+\.[a-zA-Z0-9]+$/.test(pathname);
 }
 function matchRoute(pathname, baseList) {
   return baseList.some((base) => base === '/' ? pathname === '/' : pathname === base || pathname.startsWith(`${base}/`));
