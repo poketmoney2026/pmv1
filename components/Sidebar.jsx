@@ -181,36 +181,40 @@ export default function Sidebar({ role = "user" }) {
   return (
     <>
       <div
-        className={[funnelDisplay.className, "fixed left-0 right-0 top-0 z-50 h-14 select-none border-b px-4 md:hidden"].join(" ")}
+        className={[funnelDisplay.className, "fixed left-0 right-0 top-0 z-50 h-14 select-none border-b px-3 md:hidden"].join(" ")}
         style={{ backgroundColor: "var(--pm-bg)", borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", color: "var(--pm-fg)" }}
       >
-        <div className="relative flex h-full items-center gap-3">
-          <button
-            onClick={() => setOpen(true)}
-            disabled={loggingOut}
-            className="shrink-0 border p-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 6%, transparent)", color: "var(--pm-fg)" }}
-            aria-label="Open menu"
-          >
-            <MenuIcon className="h-5 w-5" style={{ color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)" }} />
-          </button>
+        <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div className="flex items-center justify-self-start">
+            <button
+              onClick={() => setOpen(true)}
+              disabled={loggingOut}
+              className="shrink-0 border p-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 6%, transparent)", color: "var(--pm-fg)" }}
+              aria-label="Open menu"
+            >
+              <MenuIcon className="h-5 w-5" style={{ color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)" }} />
+            </button>
+          </div>
 
-          <div className="pointer-events-none absolute inset-x-0 flex justify-center px-12">
-            <Link href="/" onClick={() => setOpen(false)} aria-label="Go to dashboard" className="pointer-events-auto shrink-0 select-none">
+          <div className="flex min-w-0 items-center justify-center">
+            <Link href="/" onClick={() => setOpen(false)} aria-label="Go to dashboard" className="shrink-0 select-none">
               <BrandMark />
             </Link>
           </div>
 
-          {!isAdmin ? (
-            <div className="shrink-0 overflow-hidden border px-3 py-1" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 6%, transparent)", color: "var(--pm-fg)" }}>
-              <div className="text-[10px] font-bold uppercase leading-none tracking-widest" style={{ color: "color-mix(in srgb, var(--pm-fg) 60%, transparent)" }}>
-                Balance
+          <div className="flex items-center justify-self-end">
+            {!isAdmin ? (
+              <div className="min-w-[108px] overflow-hidden border px-3 py-1 text-right" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 6%, transparent)", color: "var(--pm-fg)" }}>
+                <div className="text-[10px] font-bold uppercase leading-none tracking-widest" style={{ color: "color-mix(in srgb, var(--pm-fg) 60%, transparent)" }}>
+                  Balance
+                </div>
+                <div className="whitespace-nowrap text-[14px] font-black leading-tight tabular-nums">Tk{balanceReady ? fmt2(balance) : "…"}</div>
               </div>
-              <div className="whitespace-nowrap text-[14px] font-black leading-tight tabular-nums">Tk{balanceReady ? fmt2(balance) : "…"}</div>
-            </div>
-          ) : (
-            <div className="w-11 shrink-0" aria-hidden="true" />
-          )}
+            ) : (
+              <div className="w-11 shrink-0" aria-hidden="true" />
+            )}
+          </div>
         </div>
       </div>
 

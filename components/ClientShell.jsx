@@ -41,18 +41,18 @@ export default function ClientShell({ children }) {
   useEffect(() => {
     const audio = new Audio('/audio/click.mp3');
     audio.preload = 'auto';
-    audio.volume = 1;
+    audio.volume = 0.8;
     clickAudioRef.current = audio;
+    const selector = 'button, a, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], summary, [data-click-sound="true"]';
     const onClick = (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
-      const button = target.closest('button, input[type="button"], input[type="submit"], input[type="reset"], [role="button"]');
-      if (!button) return;
-      const player = clickAudioRef.current;
-      if (!player) return;
+      const clickable = target.closest(selector);
+      if (!clickable) return;
+      const src = clickAudioRef.current?.src || '/audio/click.mp3';
       try {
-        player.pause();
-        player.currentTime = 0;
+        const player = new Audio(src);
+        player.volume = 0.8;
         player.play().catch(() => {});
       } catch {}
     };
