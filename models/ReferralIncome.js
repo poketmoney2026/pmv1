@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const ReferralIncomeSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     amount: { type: Number, required: true, min: 0 },
     date: { type: Date, default: Date.now, index: true },
   },

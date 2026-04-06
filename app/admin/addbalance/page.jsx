@@ -62,7 +62,7 @@ function Field({ icon: Icon, label, placeholder, value, onChange, type = "text",
 }
 
 function ValidateLine({ touched, ok, warnText, tipText, pm }) {
-  if (!touched) return <div className="text-[11px]" style={{ color: selected === 'default' ? "color-mix(in srgb, var(--pm-bg) 72%, transparent)" : pm.fg70 }}>{tipText}</div>;
+  if (!touched) return <div className="text-[11px]" style={{ color: pm.fg70 }}>{tipText}</div>;
   if (ok) return <div className="inline-flex items-center gap-2 text-[11px] font-bold" style={{ color: pm.fg }}><CheckCircle2 className="h-4 w-4" /> Looks good</div>;
   return <div className="inline-flex items-center gap-2 text-[11px] font-bold" style={{ color: pm.fg80 }}><AlertCircle className="h-4 w-4" /> {warnText}</div>;
 }
@@ -83,19 +83,19 @@ function GiftModal({ open, pm, formAmount, defaultAmount, selected, setSelected,
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4">
       <div className="w-full max-w-sm border p-4" style={{ borderColor: pm.b28, background: 'var(--pm-bg)', color: pm.fg }}>
-        <div className="flex items-center justify-between gap-3 border-b pb-3" style={{ borderColor: pm.b20 }}>
+        <div className="flex items-center justify-between gap-3 border-b pb-3" style={{ borderColor: pm.b22 }}>
           <div>
             <div className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg70 }}>Gift</div>
             <div className="mt-1 text-base font-black tracking-widest uppercase">Choose Gift Amount</div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center border" style={{ borderColor: pm.b20, background: pm.bg08 }}><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center border" style={{ borderColor: pm.b22, background: pm.bg08 }}><X className="h-4 w-4" /></button>
         </div>
         <div className="mt-3 space-y-2">
-          <button type="button" onClick={() => setSelected('default')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'default' ? pm.fg : pm.b20, background: selected === 'default' ? pm.fg : "rgba(0,0,0,0.32)", color: selected === 'default' ? "var(--pm-bg)" : pm.fg, boxShadow: selected === 'default' ? `inset 0 0 0 2px ${pm.fg}` : "none" }}>
+          <button type="button" onClick={() => setSelected('default')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'default' ? pm.fg : pm.b22, background: selected === 'default' ? pm.fg : "rgba(0,0,0,0.32)", color: selected === 'default' ? "var(--pm-bg)" : pm.fg, boxShadow: selected === 'default' ? `inset 0 0 0 2px ${pm.fg}` : "none" }}>
             <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: selected === 'default' ? "color-mix(in srgb, var(--pm-bg) 70%, transparent)" : pm.fg70 }}>Default</div>
             <div className="mt-1 font-black">Tk {Number(defaultAmount || 0).toFixed(2)}</div>
           </button>
-          <button type="button" onClick={() => setSelected('custom')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'custom' ? pm.fg : pm.b20, background: selected === 'custom' ? pm.fg : "rgba(0,0,0,0.32)", color: selected === 'custom' ? "var(--pm-bg)" : pm.fg, boxShadow: selected === 'custom' ? `inset 0 0 0 2px ${pm.fg}` : "none" }}>
+          <button type="button" onClick={() => setSelected('custom')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'custom' ? pm.fg : pm.b22, background: selected === 'custom' ? pm.fg : "rgba(0,0,0,0.32)", color: selected === 'custom' ? "var(--pm-bg)" : pm.fg, boxShadow: selected === 'custom' ? `inset 0 0 0 2px ${pm.fg}` : "none" }}>
             <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: selected === 'custom' ? "color-mix(in srgb, var(--pm-bg) 70%, transparent)" : pm.fg70 }}>Custom</div>
             <div className="mt-1 font-black">Tk {customAmount > 0 ? customAmount.toFixed(2) : '0.00'}</div>
           </button>
