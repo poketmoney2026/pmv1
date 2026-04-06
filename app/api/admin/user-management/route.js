@@ -52,7 +52,7 @@ export async function GET(req) {
   const txRejectAgg = await Transaction.aggregate([{ $match: { status: "reject" } }, { $group: { _id: null, rejectedTx: { $sum: 1 } } }]);
   const withdrawAgg = await Transaction.aggregate([{ $match: { status: "successful", type: "withdraw" } }, { $group: { _id: null, totalWithdrawAmount: { $sum: { $ifNull: ["$amount", 0] } }, successfulWithdrawCount: { $sum: 1 } } }]);
 
-  const sortStage = sort === "balance_desc" ? { balance: -1, createdAt: -1 } : sort === "balance_asc" ? { balance: 1, createdAt: -1 } : sort === "tx_desc" ? { txCount: -1, createdAt: -1 } : sort === "withdraw_desc" ? { withdrawTotal: -1, createdAt: -1 } : { createdAt: -1 };
+  const sortStage = sort === "balance_desc" ? { balance: -1, createdAt: -1 } : sort === "balance_asc" ? { balance: 1, createdAt: -1 } : sort === "tx_desc" ? { txCount: -1, createdAt: -1 } : sort === "withdraw_desc" ? { withdrawTotal: -1, createdAt: -1 } : sort === "deposit_desc" ? { depositTotal: -1, createdAt: -1 } : sort === "referral_desc" ? { referralsCount: -1, createdAt: -1 } : { createdAt: -1 };
 
   const pipeline = [
     { $match: match },
@@ -62,12 +62,12 @@ export async function GET(req) {
         let: { uid: "$_id" },
         pipeline: [
           { $match: { $expr: { $eq: ["$user", "$$uid"] } } },
-          { $group: { _id: null, txCount: { $sum: 1 }, successCount: { $sum: { $cond: [{ $eq: ["$status", "successful"] }, 1, 0] } }, rejectCount: { $sum: { $cond: [{ $eq: ["$status", "reject"] }, 1, 0] } }, withdrawCount: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "successful"] }, { $eq: ["$type", "withdraw"] }] }, 1, 0] } }, withdrawTotal: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "successful"] }, { $eq: ["$type", "withdraw"] }] }, { $ifNull: ["$amount", 0] }, 0] } } } },
+          { $group: { _id: null, txCount: { $sum: 1 }, successCount: { $sum: { $cond: [{ $eq: ["$status", "successful"] }, 1, 0] } }, rejectCount: { $sum: { $cond: [{ $eq: ["$status", "reject"] }, 1, 0] } }, withdrawCount: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "successful"] }, { $eq: ["$type", "withdraw"] }] }, 1, 0] } }, withdrawTotal: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "successful"] }, { $eq: ["$type", "withdraw"] }] }, { $ifNull: ["$amount", 0] }, 0] } }, depositTotal: { $sum: { $cond: [{ $and: [{ $eq: ["$status", "successful"] }, { $eq: ["$type", "deposit"] }] }, { $ifNull: ["$amount", 0] }, 0] } } } },
         ],
         as: "txMeta",
       },
     },
-    { $addFields: { txCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.txCount", 0] }, 0] }, successCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.successCount", 0] }, 0] }, rejectCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.rejectCount", 0] }, 0] }, withdrawCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.withdrawCount", 0] }, 0] }, withdrawTotal: { $ifNull: [{ $arrayElemAt: ["$txMeta.withdrawTotal", 0] }, 0] }, accountStatus: { $ifNull: ["$status", "active"] } } },
+    { $addFields: { txCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.txCount", 0] }, 0] }, successCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.successCount", 0] }, 0] }, rejectCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.rejectCount", 0] }, 0] }, withdrawCount: { $ifNull: [{ $arrayElemAt: ["$txMeta.withdrawCount", 0] }, 0] }, withdrawTotal: { $ifNull: [{ $arrayElemAt: ["$txMeta.withdrawTotal", 0] }, 0] }, depositTotal: { $ifNull: [{ $arrayElemAt: ["$txMeta.depositTotal", 0] }, 0] }, referralsCount: { $size: { $ifNull: ["$referrals", []] } }, accountStatus: { $ifNull: ["$status", "active"] } } },
     { $sort: sortStage },
     { $skip: page * limit },
     { $limit: limit + 1 },

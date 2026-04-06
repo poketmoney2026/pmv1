@@ -30,7 +30,7 @@ function usePM() {
 function Block({ title, children, pm }) {
   return (
     <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06, boxShadow: `0 0 0 1px ${pm.b22}` }}>
-      <div className="mb-2 text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg90 }}>{title}</div>
+      <div className="mb-2 text-[10px] font-bold tracking-widest uppercase" style={{ color: pm.fg90 }}>{title}</div>
       {children}
     </div>
   );
@@ -105,6 +105,8 @@ export default function AdminUserManagementPage() {
     { value: "balance_asc", label: "Balance: low → high" },
     { value: "tx_desc", label: "Most transactions" },
     { value: "withdraw_desc", label: "Most withdraw amount" },
+    { value: "deposit_desc", label: "Most deposit amount" },
+    { value: "referral_desc", label: "Most referrals" },
   ], []);
 
   const roleOptions = useMemo(() => [
@@ -221,7 +223,7 @@ export default function AdminUserManagementPage() {
             <div className="min-w-0">
               <div className="text-[11px] tracking-widest uppercase" style={{ color: pm.fg80 }}>Admin</div>
               <div className="mt-1 text-lg font-black tracking-widest uppercase" style={{ color: pm.fg }}>USER MANAGEMENT</div>
-              <div className="mt-2 text-[11px]" style={{ color: pm.fg70 }}>Analytics + filters + user list + status control.</div>
+              <div className="mt-2 text-[10px]" style={{ color: pm.fg70 }}>Analytics + filters + user list + status control.</div>
             </div>
             <span className="grid h-12 w-12 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}><ShieldCheck className="h-6 w-6" /></span>
           </div>
@@ -241,9 +243,9 @@ export default function AdminUserManagementPage() {
         <Block pm={pm} title="ANALYTICS">
           {loading ? <div className="border px-3 py-3 text-[11px]" style={{ borderColor: pm.b28, background: pm.bg08, color: pm.fg75 }}>Loading analytics...</div> : totals ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2"><Users className="h-4 w-4" /> TOTAL USERS</span><span className="font-black">{totals.totalUsers || 0}</span></div>
-              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2"><Wallet className="h-4 w-4" /> TOTAL BALANCE</span><span className="font-black">{fmt2(totals.totalBalance || 0)}</span></div>
-              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2"><ArrowDownToLine className="h-4 w-4" /> TOTAL WITHDRAW AMOUNT</span><span className="font-black">{fmt2(totals.totalWithdrawAmount || 0)}</span></div>
+              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2 text-[10px]"><Users className="h-4 w-4" /> TOTAL USERS</span><span className="text-[12px] font-black">{totals.totalUsers || 0}</span></div>
+              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2 text-[10px]"><Wallet className="h-4 w-4" /> TOTAL BALANCE</span><span className="text-[12px] font-black">{fmt2(totals.totalBalance || 0)}</span></div>
+              <div className="flex items-center justify-between border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><span className="inline-flex items-center gap-2 text-[10px]"><ArrowDownToLine className="h-4 w-4" /> TOTAL WITHDRAW AMOUNT</span><span className="text-[12px] font-black">{fmt2(totals.totalWithdrawAmount || 0)}</span></div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] tracking-widest uppercase" style={{ color: pm.fg70 }}>SUCCESS</div><div className="mt-1 font-black">{totals.successfulTx || 0}</div></div>
                 <div className="border px-3 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] tracking-widest uppercase" style={{ color: pm.fg70 }}>REJECT</div><div className="mt-1 font-black">{totals.rejectedTx || 0}</div></div>

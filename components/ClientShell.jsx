@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Toaster } from "react-hot-toast";
@@ -35,6 +35,34 @@ export default function ClientShell({ children }) {
 
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [giftOpen, setGiftOpen] = useState(false);
+  const clickAudioRef = useRef(null);
+
+
+  useEffect(() => {
+    const audio = new Audio('/audio/click.mp3');
+    audio.preload = 'auto';
+    audio.volume = 1;
+    clickAudioRef.current = audio;
+    const onClick = (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const button = target.closest('button, input[type="button"], input[type="submit"], input[type="reset"], [role="button"]');
+      if (!button) return;
+      const player = clickAudioRef.current;
+      if (!player) return;
+      try {
+        player.pause();
+        player.currentTime = 0;
+        player.play().catch(() => {});
+      } catch {}
+    };
+    document.addEventListener('click', onClick, true);
+    return () => {
+      document.removeEventListener('click', onClick, true);
+      try { clickAudioRef.current?.pause(); } catch {}
+      clickAudioRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (hideNav) return;

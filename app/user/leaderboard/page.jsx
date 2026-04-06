@@ -86,6 +86,14 @@ function Row({ rank, name, claimTotal, pm, isMe, onClick }) {
   );
 }
 
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString('en-US', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+}
+
 function Countdown({ nextGiveawayAt }) {
   const [tick, setTick] = useState(0);
   useEffect(() => { const t = setInterval(() => setTick((v) => v + 1), 1000); return () => clearInterval(t); }, []);
@@ -103,24 +111,26 @@ function DetailModal({ open, onClose, detail, loading, pm }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-black/80 p-4">
-      <div className="w-full max-w-sm border p-4" style={{ borderColor: pm.b28, background: "var(--pm-bg)", color: pm.fg }}>
+      <div className="w-full max-w-[19rem] border p-4" style={{ borderColor: pm.b28, background: "var(--pm-bg)", color: pm.fg }}>
         <div className="flex items-center justify-between gap-3 border-b pb-3" style={{ borderColor: pm.b20 }}>
           <div>
             <div className="text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Leaderboard User</div>
-            <div className="mt-1 text-base font-black tracking-widest uppercase">User Info</div>
+            <div className="mt-1 text-sm font-black tracking-widest uppercase">User Info</div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center border" style={{ borderColor: pm.b20, background: pm.bg08 }}><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center border" style={{ borderColor: pm.b20, background: pm.bg08 }}><X className="h-4 w-4" /></button>
         </div>
         {loading ? <div className="py-8 text-center text-sm">Loading...</div> : detail ? (
           <div className="mt-4 space-y-2">
-            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>User</div><div className="mt-1 text-sm font-black">{detail.name}</div></div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Position</div><div className="mt-1 font-black">{detail.position || "-"}</div></div>
-              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Referred</div><div className="mt-1 font-black">{detail.totalReferred || 0}</div></div>
+              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>User</div><div className="mt-1 text-[12px] font-black truncate">{detail.name}</div></div>
+              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Total Earning</div><div className="mt-1 text-[12px] font-black">{money(detail.totalEarning)}</div></div>
             </div>
-            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Total Earning</div><div className="mt-1 text-lg font-black">{money(detail.totalEarning)}</div></div>
-            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Total Deposited</div><div className="mt-1 font-black">{money(detail.totalDeposited)}</div></div>
-            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Joined</div><div className="mt-1 font-black">{detail.joinedDaysAgo} day{Number(detail.joinedDaysAgo || 0) === 1 ? "" : "s"} ago</div></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Position</div><div className="mt-1 text-[12px] font-black">{detail.position || "-"}</div></div>
+              <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Referral</div><div className="mt-1 text-[12px] font-black">{detail.totalReferred || 0}</div></div>
+            </div>
+            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Total Deposited</div><div className="mt-1 text-[12px] font-black">{money(detail.totalDeposited)}</div></div>
+            <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Joined Date</div><div className="mt-1 text-[11px] font-black leading-5 break-words">{formatDateTime(detail.joinedAt)}</div></div>
           </div>
         ) : <div className="py-8 text-center text-sm">No data found.</div>}
         <button type="button" onClick={onClose} className="mt-4 w-full border py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.b28, background: pm.bg08, color: pm.fg }}>Close</button>

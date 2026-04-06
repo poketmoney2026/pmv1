@@ -5,12 +5,12 @@
   --background:#ffffff;
   --foreground:#171717;
 
-  /* default theme = violet */
-  --pm-bg:#1e1b4b;
-  --pm-a:#1e1b4b;
-  --pm-b:#312e81;
-  --pm-fg:#eef2ff;
-  --pm-accent:#1e1b4b;
+  /* default theme = black */
+  --pm-bg:#000000;
+  --pm-a:#000000;
+  --pm-b:#0a0a0a;
+  --pm-fg:#f5f5f5;
+  --pm-accent:#000000;
   --pm-bg-grad:linear-gradient(135deg,var(--pm-a),var(--pm-b));
 
   /* ✅ only Funnel Display */

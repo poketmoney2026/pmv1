@@ -184,7 +184,7 @@ export default function Sidebar({ role = "user" }) {
         className={[funnelDisplay.className, "fixed left-0 right-0 top-0 z-50 h-14 select-none border-b px-4 md:hidden"].join(" ")}
         style={{ backgroundColor: "var(--pm-bg)", borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", color: "var(--pm-fg)" }}
       >
-        <div className="flex h-full items-center gap-3">
+        <div className="relative flex h-full items-center gap-3">
           <button
             onClick={() => setOpen(true)}
             disabled={loggingOut}
@@ -195,8 +195,8 @@ export default function Sidebar({ role = "user" }) {
             <MenuIcon className="h-5 w-5" style={{ color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)" }} />
           </button>
 
-          <div className="flex min-w-0 flex-1 justify-center px-2">
-            <Link href="/" onClick={() => setOpen(false)} aria-label="Go to dashboard" className="shrink-0 select-none">
+          <div className="pointer-events-none absolute inset-x-0 flex justify-center px-12">
+            <Link href="/" onClick={() => setOpen(false)} aria-label="Go to dashboard" className="pointer-events-auto shrink-0 select-none">
               <BrandMark />
             </Link>
           </div>

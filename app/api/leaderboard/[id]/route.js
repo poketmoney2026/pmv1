@@ -59,6 +59,7 @@ export async function GET(req, ctx) {
       totalReferred: Array.isArray(user.referrals) ? user.referrals.length : 0,
       totalDeposited: Number(depositAgg?.[0]?.total || 0),
       joinedDaysAgo: daysAgo(user.joinDate || user.createdAt),
+      joinedAt: user.joinDate || user.createdAt || null,
     },
   }, { status: 200 });
 }
