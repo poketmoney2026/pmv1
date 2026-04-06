@@ -96,6 +96,7 @@ export default function AdminUserManagementPage() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [details, setDetails] = useState(null);
   const [inactiveModal, setInactiveModal] = useState({ open: false, userId: "", reason: INACTIVE_REASONS[0] });
+  const [deleteModal, setDeleteModal] = useState({ open: false, userId: "" });
   const limit = 15;
 
   const sortOptions = useMemo(() => [
@@ -183,6 +184,19 @@ export default function AdminUserManagementPage() {
     }
   };
 
+  const deleteUser = async (userId) => {
+    try {
+      const res = await fetch("/api/admin/user-management", { method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) return toast.error(j?.message || "Failed to delete user");
+      toast.success(j?.message || "User deleted");
+      setUsers((prev) => prev.filter((u) => String(u._id) !== String(userId)));
+      setDeleteModal({ open: false, userId: "" });
+    } catch {
+      toast.error("Network error");
+    }
+  };
+
   const openDetails = async (userId) => {
     setDetailsOpen(true);
     setDetailsLoading(true);
@@ -261,9 +275,10 @@ export default function AdminUserManagementPage() {
                         <div className="mt-2 flex justify-center"><Eye className="h-5 w-5" /></div>
                       </button>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="mt-3 grid grid-cols-3 gap-2">
                       <button type="button" onClick={() => changeStatus(String(u._id), "active")} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.greenBd, background: pm.greenBg, color: pm.fg }}>MAKE ACTIVE</button>
                       <button type="button" onClick={() => setInactiveModal({ open: true, userId: String(u._id), reason: INACTIVE_REASONS[0] })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.redBd, background: pm.redBg, color: pm.fg }}>MAKE INACTIVE</button>
+                      <button type="button" onClick={() => setDeleteModal({ open: true, userId: String(u._id) })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.b28, background: pm.bg08, color: pm.fg }}>DELETE</button>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <div className="border px-2.5 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: pm.fg70 }}>Balance</div><div className="mt-1 text-[12px] font-black tabular-nums">{fmt2(u.balance || 0)}</div></div>
@@ -292,6 +307,19 @@ export default function AdminUserManagementPage() {
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setInactiveModal({ open: false, userId: "", reason: INACTIVE_REASONS[0] })} className="border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>Cancel</button>
             <button type="button" onClick={async () => { const { userId, reason } = inactiveModal; setInactiveModal({ open: false, userId: "", reason: INACTIVE_REASONS[0] }); await changeStatus(userId, "inactive", reason); }} className="border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.redBd, background: pm.redBg, color: pm.fg }}>Confirm</button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={deleteModal.open} onClose={() => setDeleteModal({ open: false, userId: "" })} pm={pm}>
+        <div className="border-b px-4 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}>
+          <div className="text-[12px] font-black tracking-widest uppercase">Delete User</div>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="text-sm" style={{ color: pm.fg }}>Are you sure you want to delete this user?</div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setDeleteModal({ open: false, userId: "" })} className="border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>Cancel</button>
+            <button type="button" onClick={() => deleteUser(deleteModal.userId)} className="border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.redBd, background: pm.redBg, color: pm.fg }}>Confirm</button>
           </div>
         </div>
       </Modal>

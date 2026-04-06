@@ -15,7 +15,7 @@ export async function GET() {
     if (!me) return NextResponse.json({ message: "User not found" }, { status: 404 })
 
     const referralCode = clean(me.referralCode)
-    const referralLink = `https://poketmoney.online/user/signup?${encodeURIComponent(referralCode || "")}`
+    const referralLink = `https://poketmoney.online/user/signup?ref=${encodeURIComponent(referralCode || "")}`
 
     const ids = Array.isArray(me.referrals) ? me.referrals : []
     const referredUsers = ids.length

@@ -50,6 +50,7 @@ const invalidState = {
   balanceReady: false,
   inactiveReason: "",
   notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30 },
+  giftNotice: { open: false, amount: 0, updatedAt: null },
   lastSyncedAt: Date.now(),
 };
 
@@ -65,6 +66,7 @@ const useLiveAppStore = create(
     balanceReady: false,
     inactiveReason: "",
     notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30 },
+    giftNotice: { open: false, amount: 0, updatedAt: null },
     user: null,
     currentPath: "/",
     lastSyncedAt: 0,
@@ -95,6 +97,11 @@ const useLiveAppStore = create(
         support,
         inactiveReason: snapshot?.inactiveReason || "",
         notice: nextNotice,
+        giftNotice: {
+          open: Boolean(snapshot?.giftNotice?.open),
+          amount: Number(snapshot?.giftNotice?.amount || 0),
+          updatedAt: snapshot?.giftNotice?.updatedAt || null,
+        },
         user: snapshot?.user || null,
         lastSyncedAt: Date.now(),
       };

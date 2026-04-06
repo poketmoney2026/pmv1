@@ -78,6 +78,11 @@ export async function POST(req) {
       const selectedAmount = isGift && giftOption === "default" && defaultGiftAmount > 0 ? defaultGiftAmount : amount;
       if (isPlus || isGift) {
         user.balance = round2(Number(user.balance || 0) + selectedAmount);
+        if (isGift) {
+          user.giftNoticeOpen = true;
+          user.giftNoticeAmount = selectedAmount;
+          user.giftNoticeUpdatedAt = new Date();
+        }
       } else {
         const nextBal = round2(Number(user.balance || 0) - amount);
         if (nextBal < 0) throw new Error("INSUFFICIENT_BALANCE");

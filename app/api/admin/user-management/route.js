@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import Deposit from "@/models/Deposit";
+import Withdraw from "@/models/Withdraw";
+import ReferralIncome from "@/models/ReferralIncome";
+import ChatThread from "@/models/ChatThread";
+import ChatMessage from "@/models/ChatMessage";
 import { getAuthUserFromRequest } from "@/lib/auth";
 
 function toInt(v, d = 0) {
@@ -104,4 +109,31 @@ export async function PATCH(req) {
   if (!updated) return NextResponse.json({ ok: false, message: "User not found" }, { status: 404 });
 
   return NextResponse.json({ ok: true, message: `User ${status}`, data: updated }, { status: 200 });
+}
+
+
+export async function DELETE(req) {
+  const auth = await ensureAdmin(req);
+  if (!auth.ok) return auth.res;
+  await dbConnect();
+
+  const body = await req.json().catch(() => ({}));
+  const userId = safeStr(body.userId);
+  if (!userId) return NextResponse.json({ ok: false, message: "User id required" }, { status: 400 });
+  if (String(auth.userId) === userId) return NextResponse.json({ ok: false, message: "You cannot delete your own account" }, { status: 400 });
+
+  const user = await User.findById(userId).select("_id referrals referredBy").lean();
+  if (!user) return NextResponse.json({ ok: false, message: "User not found" }, { status: 404 });
+
+  const thread = await ChatThread.findOne({ userId: user._id }).select("_id").lean();
+  if (thread?._id) await ChatMessage.deleteMany({ threadId: thread._id });
+  await ChatThread.deleteMany({ userId: user._id });
+  await Deposit.deleteMany({ userId: user._id });
+  await Withdraw.deleteMany({ userId: user._id });
+  await Transaction.deleteMany({ user: user._id });
+  await ReferralIncome.deleteMany({ userId: user._id });
+  await User.updateMany({ referrals: user._id }, { $pull: { referrals: user._id } });
+  await User.deleteOne({ _id: user._id });
+
+  return NextResponse.json({ ok: true, message: "User deleted successfully" }, { status: 200 });
 }

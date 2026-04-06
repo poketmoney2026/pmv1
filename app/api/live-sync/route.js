@@ -53,7 +53,7 @@ export async function GET(req) {
       return buildResponse({ authenticated: false, role: "user", status: "invalid", sessionState: "invalid", support, notice: { title: noticeDoc?.title || "NOTICE", body: noticeDoc?.body || "", isActive: noticeDoc?.isActive !== false, updatedAt: noticeDoc?.updatedAt || null, intervalMin: Number(settings?.noticeIntervalMin || 30) } }, true);
     }
 
-    const user = await User.findById(userId).select("_id role status inactiveReason fullName mobile balance").lean();
+    const user = await User.findById(userId).select("_id role status inactiveReason fullName mobile balance giftNoticeOpen giftNoticeAmount giftNoticeUpdatedAt").lean();
     if (!user) {
       return buildResponse({ authenticated: false, role: "user", status: "deleted", sessionState: "invalid", support, notice: { title: noticeDoc?.title || "NOTICE", body: noticeDoc?.body || "", isActive: noticeDoc?.isActive !== false, updatedAt: noticeDoc?.updatedAt || null, intervalMin: Number(settings?.noticeIntervalMin || 30) } }, true);
     }
@@ -69,6 +69,11 @@ export async function GET(req) {
       support,
       inactiveReason: user.inactiveReason || "",
       notice: { title: noticeDoc?.title || "NOTICE", body: noticeDoc?.body || "", isActive: noticeDoc?.isActive !== false, updatedAt: noticeDoc?.updatedAt || null, intervalMin: Number(settings?.noticeIntervalMin || 30) },
+      giftNotice: {
+        open: Boolean(user.giftNoticeOpen),
+        amount: Number(user.giftNoticeAmount || 0),
+        updatedAt: user.giftNoticeUpdatedAt || null,
+      },
       balance: role === "user" ? Number(user.balance || 0) : 0,
       user: {
         id: String(user._id),

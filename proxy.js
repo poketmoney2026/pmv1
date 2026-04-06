@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 
 const PUBLIC_ROUTES = ["/user/signup", "/user/signin"];
 const USER_BASE_ROUTES = ["/", "/user/deposit", "/user/withdraw", "/user/profile", "/user/settings", "/user/contact", "/user/transactions", "/user/income-calculate", "/user/download", "/user/plan-and-balance-claim", "/user/leaderboard", "/user/referral", "/user/notice", "/user/live-chat"];
-const ADMIN_BASE_ROUTES = ["/admin/interest", "/admin/addbalance", "/admin/links", "/admin/general", "/admin/withdraws", "/admin/users", "/admin/approve-deposit", "/admin/payment-methods", "/admin/notice", "/admin/live-chat", "/admin/leaderboard"];
+const ADMIN_BASE_ROUTES = ["/admin/interest", "/admin/addbalance", "/admin/links", "/admin/general", "/admin/withdraws", "/admin/users", "/admin/approve-deposit", "/admin/payment-methods", "/admin/notice", "/admin/live-chat", "/admin/leaderboard", "/admin/referral"];
 
 function isSkippablePath(pathname) {
   return pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/assets') || pathname.startsWith('/apps') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/sitemap.xml' || /\/[\w.-]+\.[a-zA-Z0-9]+$/.test(pathname);

@@ -20,6 +20,9 @@ const userSchema = new Schema(
     deposit: [{ type: Schema.Types.ObjectId, ref: "Deposit", default: [] }],
     transactions: [{ type: Schema.Types.ObjectId, ref: "Transaction", default: [] }],
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    giftNoticeOpen: { type: Boolean, default: false },
+    giftNoticeAmount: { type: Number, default: 0 },
+    giftNoticeUpdatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -35,8 +35,6 @@ function usePM() {
       bg10: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
       bg12: "color-mix(in srgb, var(--pm-fg) 12%, transparent)",
       greenBg: "rgba(34,197,94,0.16)",
-      violetBg: "rgba(139,92,246,0.16)",
-      violetBd: "rgba(139,92,246,0.42)",
     }),
     []
   );
@@ -69,9 +67,9 @@ function ValidateLine({ touched, ok, warnText, tipText, pm }) {
   return <div className="inline-flex items-center gap-2 text-[11px] font-bold" style={{ color: pm.fg80 }}><AlertCircle className="h-4 w-4" /> {warnText}</div>;
 }
 
-function ModeBtn({ active, onClick, icon: Icon, label, pm, tone = "default" }) {
-  const activeBg = tone === "gift" ? pm.violetBg : pm.bg12;
-  const activeBd = tone === "gift" ? pm.violetBd : pm.b35;
+function ModeBtn({ active, onClick, icon: Icon, label, pm }) {
+  const activeBg = pm.bg12;
+  const activeBd = pm.b35;
   return (
     <button type="button" onClick={onClick} className="border px-3 py-3 font-black active:scale-[0.99]" style={{ borderColor: active ? activeBd : pm.b28, background: active ? activeBg : pm.bg10, color: pm.fg, boxShadow: active ? `inset 0 0 0 2px ${activeBd}` : "none" }}>
       <span className="inline-flex items-center justify-center gap-2"><Icon className="h-4 w-4" /> {label}</span>
@@ -93,16 +91,16 @@ function GiftModal({ open, pm, formAmount, defaultAmount, selected, setSelected,
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center border" style={{ borderColor: pm.b20, background: pm.bg08 }}><X className="h-4 w-4" /></button>
         </div>
         <div className="mt-3 space-y-2">
-          <button type="button" onClick={() => setSelected('default')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'default' ? pm.violetBd : pm.b20, background: selected === 'default' ? pm.violetBg : pm.bg08 }}>
+          <button type="button" onClick={() => setSelected('default')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'default' ? pm.b35 : pm.b20, background: selected === 'default' ? pm.bg12 : pm.bg08 }}>
             <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Default</div>
             <div className="mt-1 font-black">Tk {Number(defaultAmount || 0).toFixed(2)}</div>
           </button>
-          <button type="button" onClick={() => setSelected('custom')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'custom' ? pm.violetBd : pm.b20, background: selected === 'custom' ? pm.violetBg : pm.bg08 }}>
+          <button type="button" onClick={() => setSelected('custom')} className="w-full border px-3 py-3 text-left" style={{ borderColor: selected === 'custom' ? pm.b35 : pm.b20, background: selected === 'custom' ? pm.bg12 : pm.bg08 }}>
             <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Custom</div>
             <div className="mt-1 font-black">Tk {customAmount > 0 ? customAmount.toFixed(2) : '0.00'}</div>
           </button>
         </div>
-        <button type="button" onClick={onConfirm} className="mt-4 w-full border py-3 text-sm font-black tracking-widest uppercase" style={{ borderColor: pm.violetBd, background: pm.violetBg, color: pm.fg }}>Confirm Gift</button>
+        <button type="button" onClick={onConfirm} className="mt-4 w-full border py-3 text-sm font-black tracking-widest uppercase" style={{ borderColor: pm.b35, background: pm.bg12, color: pm.fg }}>Confirm Gift</button>
       </div>
     </div>
   );
@@ -218,11 +216,11 @@ export default function AdminAddBalancePage() {
               <div className="grid grid-cols-3 gap-2">
                 <ModeBtn pm={pm} active={mode === 'plus'} onClick={() => setMode('plus')} icon={Plus} label="PLUS" />
                 <ModeBtn pm={pm} active={mode === 'minus'} onClick={() => setMode('minus')} icon={Minus} label="MINUS" />
-                <ModeBtn pm={pm} active={mode === 'gift'} onClick={() => setMode('gift')} icon={Gift} label="GIFT" tone="gift" />
+                <ModeBtn pm={pm} active={mode === 'gift'} onClick={() => setMode('gift')} icon={Gift} label="GIFT" />
               </div>
               {mode === 'gift' ? (
                 <div className="mt-3 space-y-2">
-                  <button type="button" onClick={openGiftChooser} className="w-full border px-3 py-3 text-left text-sm font-black tracking-widest uppercase" style={{ borderColor: pm.violetBd, background: pm.violetBg, color: pm.fg }}>
+                  <button type="button" onClick={openGiftChooser} className="w-full border px-3 py-3 text-left text-sm font-black tracking-widest uppercase" style={{ borderColor: pm.b35, background: pm.bg12, color: pm.fg }}>
                     Choose Gift Amount
                   </button>
                   <div className="text-[11px]" style={{ color: pm.fg75 }}>
@@ -234,7 +232,7 @@ export default function AdminAddBalancePage() {
               )}
             </div>
 
-            <button type="button" onClick={handleSend} disabled={!canSubmit} className="w-full border py-3 text-sm font-black active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed" style={{ borderColor: mode === 'gift' ? pm.violetBd : pm.b28, background: mode === 'gift' ? pm.violetBg : pm.bg10, color: pm.fg }}>
+            <button type="button" onClick={handleSend} disabled={!canSubmit} className="w-full border py-3 text-sm font-black active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed" style={{ borderColor: mode === 'gift' ? pm.b35 : pm.b28, background: mode === 'gift' ? pm.bg12 : pm.bg10, color: pm.fg }}>
               <span className="inline-flex items-center justify-center gap-2">
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> PROCESSING...</> : <><Send className="h-4 w-4" /> SEND</>}
               </span>

@@ -1,7 +1,6 @@
 const { createServer } = require('http');
 const next = require('next');
 const { Server } = require('socket.io');
-const { trackRequest, flushNow } = require('./lib/requestCounter.cjs');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || '0.0.0.0';
@@ -11,9 +10,9 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   const server = createServer((req, res) => {
-    try { trackRequest(req); } catch {}
     handle(req, res);
   });
+
   const io = new Server(server, { path: '/socket.io', cors: { origin: '*' } });
 
   io.on('connection', (socket) => {
@@ -33,17 +32,27 @@ app.prepare().then(() => {
         io.to('admin:all').emit('chat:new', { threadId });
       } catch {}
     });
+
+    socket.on('chat:typing', (payload = {}) => {
+      try {
+        const threadId = String(payload.threadId || '');
+        const senderRole = String(payload.senderRole || 'user');
+        if (!threadId) return;
+        io.to(`thread:${threadId}`).emit('chat:typing', { threadId, senderRole, isTyping: true });
+      } catch {}
+    });
+
+    socket.on('chat:stop-typing', (payload = {}) => {
+      try {
+        const threadId = String(payload.threadId || '');
+        const senderRole = String(payload.senderRole || 'user');
+        if (!threadId) return;
+        io.to(`thread:${threadId}`).emit('chat:typing', { threadId, senderRole, isTyping: false });
+      } catch {}
+    });
   });
 
   server.listen(port, hostname, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
   });
-
-  const closeAndExit = async (code = 0) => {
-    try { await flushNow(); } catch {}
-    process.exit(code);
-  };
-
-  process.on('SIGINT', () => { void closeAndExit(0); });
-  process.on('SIGTERM', () => { void closeAndExit(0); });
 });

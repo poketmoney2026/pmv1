@@ -25,6 +25,7 @@ export default function ClientShell({ children }) {
   const support = useLiveAppStore((state) => state.support);
   const inactiveReason = useLiveAppStore((state) => state.inactiveReason);
   const notice = useLiveAppStore((state) => state.notice);
+  const giftNotice = useLiveAppStore((state) => state.giftNotice);
   const authenticated = useLiveAppStore((state) => state.authenticated);
   const liveReady = useLiveAppStore((state) => state.liveReady);
   const startLiveSync = useLiveAppStore((state) => state.startLiveSync);
@@ -33,6 +34,7 @@ export default function ClientShell({ children }) {
   const supportLink = useMemo(() => support?.contactWhatsApp || "#", [support]);
 
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
 
   useEffect(() => {
     if (hideNav) return;
@@ -51,6 +53,19 @@ export default function ClientShell({ children }) {
     const key = `pm_notice_seen_${String(notice?.updatedAt || "global")}`;
     try { localStorage.setItem(key, String(Date.now())); } catch {}
     setNoticeOpen(false);
+  };
+
+  useEffect(() => {
+    if (hideNav || !authenticated || role !== "user") return;
+    if (giftNotice?.open && Number(giftNotice?.amount || 0) > 0) setGiftOpen(true);
+  }, [authenticated, giftNotice, hideNav, role]);
+
+  const closeGift = async () => {
+    try {
+      await fetch('/api/user/gift-notice', { method: 'POST', credentials: 'include' });
+    } catch {}
+    setGiftOpen(false);
+    refreshLiveSync({ force: true });
   };
 
   useEffect(() => {
@@ -138,6 +153,17 @@ export default function ClientShell({ children }) {
             <div className="text-[11px] font-black tracking-widest uppercase">{notice?.title || "Notice"}</div>
             <div className="mt-3 whitespace-pre-wrap text-sm leading-6" style={{ color: "color-mix(in srgb, var(--pm-fg) 88%, transparent)" }}>{notice?.body || ""}</div>
             <button type="button" onClick={closeNotice} className="mt-4 w-full border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 28%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "var(--pm-fg)" }}>CLOSE</button>
+          </div>
+        </div>
+      ) : null}
+      {!hideNav && giftOpen ? (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/80 px-4">
+          <div className="w-full max-w-sm border p-5 font-mono text-center" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 28%, transparent)", background: "var(--pm-bg)", color: "var(--pm-fg)", boxShadow: "0 0 0 1px color-mix(in srgb, var(--pm-fg) 18%, transparent), 0 32px 90px rgba(0,0,0,.62)" }}>
+            <div className="text-[11px] font-black tracking-[0.28em] uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 72%, transparent)" }}>Gift Notice</div>
+            <div className="mt-3 text-[15px] font-black uppercase tracking-[0.14em]">You received a gift</div>
+            <div className="mt-4 text-[clamp(2rem,8vw,2.6rem)] font-black leading-none">Tk {Number(giftNotice?.amount || 0).toFixed(0)}</div>
+            <div className="mt-2 text-sm font-bold tracking-wide" style={{ color: "color-mix(in srgb, var(--pm-fg) 84%, transparent)" }}>added to your account</div>
+            <button type="button" onClick={closeGift} className="mt-6 w-full border px-3 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 28%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "var(--pm-fg)" }}>Close</button>
           </div>
         </div>
       ) : null}

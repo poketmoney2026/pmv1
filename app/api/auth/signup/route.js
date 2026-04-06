@@ -23,15 +23,33 @@ async function signToken(userId, role) {
 }
 
 async function generateReferralCodeFromName(name) {
-  const base = String(name || "USER").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5) || "USER";
-  let code = "";
-  for (let i = 0; i < 15; i += 1) {
-    const suffix = Math.random().toString(36).slice(2, 6).toUpperCase();
-    code = `${base}${suffix}`.slice(0, 10);
+  const words = String(name || "USER")
+    .trim()
+    .toUpperCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^A-Z0-9]/g, ""))
+    .filter(Boolean);
+  let letters = "";
+  if (words.length) {
+    letters += words[0].slice(0, 3);
+    let idx = 1;
+    while (letters.length < 3 && idx < words.length) {
+      letters += words[idx].slice(0, 3 - letters.length);
+      idx += 1;
+    }
+  }
+  letters = (letters || "USR").slice(0, 3).padEnd(3, "X");
+
+  for (let i = 0; i < 20; i += 1) {
+    const digitLen = i < 12 ? 2 : 3;
+    const max = digitLen === 2 ? 100 : 1000;
+    const digits = String(Math.floor(Math.random() * max)).padStart(digitLen, "0");
+    const code = `${letters}${digits}`;
     const exists = await User.findOne({ referralCode: code }).select("_id").lean();
     if (!exists) return code;
   }
-  return `${base}${Date.now().toString().slice(-4)}`.slice(0, 10);
+
+  return `${letters}${Date.now().toString().slice(-3)}`;
 }
 
 function round2(n) {

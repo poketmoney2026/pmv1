@@ -57,6 +57,7 @@ const ADMIN_MENU = [
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Add and Gift", href: "/admin/addbalance", icon: Coins },
   { name: "Leaderboard", href: "/admin/leaderboard", icon: Trophy },
+  { name: "Referral", href: "/admin/referral", icon: Users2 },
   { name: "Links", href: "/admin/links", icon: Link2 },
   { name: "General", href: "/admin/general", icon: Settings },
   { name: "Notice", href: "/admin/notice", icon: Bell },
@@ -208,7 +209,7 @@ export default function Sidebar({ role = "user" }) {
               <div className="whitespace-nowrap text-[14px] font-black leading-tight tabular-nums">Tk{balanceReady ? fmt2(balance) : "…"}</div>
             </div>
           ) : (
-            <div className="w-[108px] shrink-0" aria-hidden="true" />
+            <div className="w-11 shrink-0" aria-hidden="true" />
           )}
         </div>
       </div>
@@ -222,9 +223,10 @@ export default function Sidebar({ role = "user" }) {
       >
         <div className="flex h-full flex-col">
           <div className="border-b px-4 py-4" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 6%, transparent)" }}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <Link href="/" onClick={() => setOpen(false)} className="inline-flex" aria-label="Go to dashboard">
+            <div className="grid grid-cols-[40px_1fr_40px] items-center gap-3">
+              <div className="h-10 w-10" aria-hidden="true" />
+              <div className="min-w-0 text-center">
+                <Link href="/" onClick={() => setOpen(false)} className="inline-flex justify-center" aria-label="Go to dashboard">
                   <BrandMark />
                 </Link>
                 {!isAdmin ? (
