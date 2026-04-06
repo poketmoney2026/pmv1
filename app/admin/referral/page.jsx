@@ -35,7 +35,7 @@ function Modal({ open, onClose, data, loading, pm }) {
           </div>
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center border" style={{ borderColor: pm.b20, background: pm.bg08 }}><X className="h-4 w-4" /></button>
         </div>
-        {loading ? <div className="py-8 text-center text-sm">Loading...</div> : data ? (
+        {loading ? <div className="py-8 text-center text-[12px]">Loading...</div> : data ? (
           <div className="mt-4 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <div className="border px-3 py-3" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] uppercase tracking-widest" style={{ color: pm.fg70 }}>Mobile</div><div className="mt-1 font-black">{data.mobile}</div></div>
@@ -49,7 +49,7 @@ function Modal({ open, onClose, data, loading, pm }) {
                     <div className="text-[12px] font-black">{row.fullName}</div>
                     <div className="mt-1 text-[11px]" style={{ color: pm.fg70 }}>{row.mobile}</div>
                   </div>
-                )) : <div className="text-sm" style={{ color: pm.fg70 }}>No referred users.</div>}
+                )) : <div className="text-[12px]" style={{ color: pm.fg70 }}>No referred users.</div>}
               </div>
             </div>
           </div>
@@ -142,26 +142,26 @@ export default function AdminReferralPage() {
       <div className="mx-auto max-w-md space-y-3">
         <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
           <div className="flex items-center justify-between gap-3">
-            <div><div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Admin</div><div className="mt-1 text-lg font-black tracking-widest uppercase">Referral</div></div>
+            <div><div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Admin</div><div className="mt-1 text-base font-black tracking-widest uppercase">Referral</div></div>
             <span className="grid h-11 w-11 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}><Users2 className="h-5 w-5" /></span>
           </div>
         </div>
         <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
           <div className="mb-2 text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Search by Mobile</div>
           <div className="flex gap-2">
-            <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: pm.fg70 }} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="01XXXXXXXXX" className="w-full border py-3 pl-10 pr-3 text-sm outline-none" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} /></div>
+            <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: pm.fg70 }} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="01XXXXXXXXX" className="w-full border py-3 pl-10 pr-3 text-[12px] outline-none" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} /></div>
             <button type="button" onClick={onSearch} className="border px-4 py-3 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>Search</button>
           </div>
         </div>
         <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
           <div className="mb-3 text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Top Referral Users</div>
           <div className="space-y-2">
-            {loading ? <div className="border px-3 py-4 text-sm" style={{ borderColor: pm.b20, background: pm.bg08 }}>Loading...</div> : users.length ? users.map((row, idx) => (
+            {loading ? <div className="border px-3 py-4 text-[12px]" style={{ borderColor: pm.b20, background: pm.bg08 }}>Loading...</div> : users.length ? users.map((row, idx) => (
               <button key={row._id} type="button" onClick={() => openDetail(row._id)} className="w-full border px-3 py-3 text-left" style={{ borderColor: pm.b20, background: pm.bg08 }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Rank {idx + 1}</div>
-                    <div className="mt-1 text-sm font-black">{row.fullName}</div>
+                    <div className="mt-1 text-[12px] font-black">{row.fullName}</div>
                     <div className="mt-1 text-[11px]" style={{ color: pm.fg70 }}>{row.mobile}</div>
                   </div>
                   <div className="text-right">
@@ -171,7 +171,7 @@ export default function AdminReferralPage() {
                   </div>
                 </div>
               </button>
-            )) : <div className="border px-3 py-4 text-sm" style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg70 }}>No referral users found.</div>}
+            )) : <div className="border px-3 py-4 text-[12px]" style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg70 }}>No referral users found.</div>}
           </div>
           {hasMore ? <button type="button" onClick={loadMore} disabled={loadingMore} className="mt-3 w-full border py-3 text-[11px] font-black tracking-widest uppercase disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>{loadingMore ? <span className="inline-flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Loading...</span> : "Show More Users"}</button> : null}
         </div>

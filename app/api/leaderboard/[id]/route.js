@@ -25,11 +25,12 @@ async function getRankMap() {
   return map;
 }
 
-export async function GET(req, { params }) {
+export async function GET(req, ctx) {
   const auth = await getAuthUserFromRequest(req, { allowInactive: false });
   if (!auth.ok) return auth.res;
   await dbConnect();
 
+  const params = await ctx.params;
   const id = String(params?.id || "");
   if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ ok: false, message: "Invalid user" }, { status: 400 });
 

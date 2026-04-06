@@ -20,13 +20,33 @@ function usePM() {
   }), []);
 }
 
-function copyText(value, label) {
-  return navigator.clipboard.writeText(value).then(() => toast.success(`${label} copied`)).catch(() => toast.error("Copy failed"));
+async function copyText(value, label) {
+  const text = String(value || "").trim();
+  if (!text) return toast.error("Nothing to copy");
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.setAttribute("readonly", "");
+      el.style.position = "absolute";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      el.setSelectionRange(0, text.length);
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    toast.success(`${label} copied`);
+  } catch {
+    toast.error("Copy failed");
+  }
 }
 
 function SquareAction({ onClick, icon: Icon, label, pm }) {
   return (
-    <button type="button" onClick={onClick} className="grid h-11 w-11 place-items-center border transition-transform active:scale-[0.98]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} aria-label={label}>
+    <button type="button" onClick={onClick} className="grid h-12 w-12 shrink-0 place-items-center border transition-transform active:scale-[0.98]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} aria-label={label}>
       <Icon className="h-4 w-4" />
     </button>
   );
@@ -74,14 +94,14 @@ export default function ReferralPage() {
     <div className={`${funnelDisplay.className} mt-12 min-h-[100svh] px-3 py-5`} style={{ background: "var(--pm-bg-grad)", color: pm.fg, fontFamily: "var(--pm-font)" }}>
       <div className="mx-auto max-w-md space-y-3">
         <div className="border p-4" style={{ borderColor: pm.b28, background: pm.bg06, boxShadow: `0 0 0 1px ${pm.b20}` }}>
-          <div className="text-center text-[11px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg85 }}>Referral</div>
-          <div className="mt-2 text-center text-sm" style={{ color: pm.fg70 }}>Share your link or code to invite friends.</div>
+          <div className="text-center text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg85 }}>Referral</div>
+          <div className="mt-2 text-center text-[12px]" style={{ color: pm.fg70 }}>Share your link or code to invite friends.</div>
         </div>
 
         <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06, boxShadow: `0 0 0 1px ${pm.b20}` }}>
           <div className="mb-2 text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Referral Link</div>
           <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1 border px-3 py-3 text-[12px] font-black" style={{ borderColor: pm.b20, background: pm.bg08 }}>{loading ? "Loading..." : (referralLink || "N/A")}</div>
+            <div className="flex h-12 min-w-0 flex-1 items-center overflow-hidden border px-3 text-[11px] font-black" style={{ borderColor: pm.b20, background: pm.bg08 }}>{loading ? "Loading..." : (referralLink || "N/A")}</div>
             <SquareAction onClick={() => referralLink && copyText(referralLink, "Referral link")} icon={Link2} label="Copy referral link" pm={pm} />
           </div>
         </div>
@@ -89,7 +109,7 @@ export default function ReferralPage() {
         <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06, boxShadow: `0 0 0 1px ${pm.b20}` }}>
           <div className="mb-2 text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Referral Code</div>
           <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1 border px-3 py-3 text-[14px] font-black tracking-[0.25em] uppercase" style={{ borderColor: pm.b20, background: pm.bg08 }}>{loading ? "..." : (referralCode || "N/A")}</div>
+            <div className="flex h-12 min-w-0 flex-1 items-center overflow-hidden border px-3 text-[12px] font-black tracking-[0.18em] uppercase" style={{ borderColor: pm.b20, background: pm.bg08 }}>{loading ? "..." : (referralCode || "N/A")}</div>
             <SquareAction onClick={() => referralCode && copyText(referralCode, "Referral code")} icon={Copy} label="Copy referral code" pm={pm} />
           </div>
         </div>
@@ -100,7 +120,7 @@ export default function ReferralPage() {
               <div className="text-[10px] font-black tracking-[0.28em] uppercase" style={{ color: pm.fg70 }}>Total Referral</div>
               <div className="mt-1 text-[22px] font-black tabular-nums">{loading ? "..." : referrals.length}</div>
             </div>
-            <div className="grid h-11 w-11 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}>
+            <div className="grid h-12 w-12 shrink-0 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}>
               <Users className="h-5 w-5" />
             </div>
           </div>
