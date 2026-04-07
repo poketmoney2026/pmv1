@@ -17,6 +17,27 @@ function isValidMobileBD(v) { return /^01\d{9}$/.test(String(v || "").trim()); }
 function round2(n) { return Number(Number(n || 0).toFixed(2)); }
 function clamp0(n) { const x = Number(n || 0); return Number.isFinite(x) && x > 0 ? x : 0; }
 function sec(n) { return Math.max(0, Math.floor(Number(n || 0))); }
+function fmtBDT0(n) { return `Tk ${Number(n || 0).toFixed(0)}`; }
+function escapeHtml(s) { return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+
+async function sendTelegramWithdraw({ text }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return { ok: false, message: "TELEGRAM_ENV_MISSING" };
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok || !j?.ok) return { ok: false, message: j?.description || "TELEGRAM_SEND_FAILED" };
+  return { ok: true };
+}
 
 async function getLast24hUsage(userId, now = new Date()) {
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -117,7 +138,19 @@ export async function POST(req) {
     await session.commitTransaction();
     session.endSession();
 
-    return NextResponse.json({ ok: true, message: "Withdraw requested", data: { withdrawId: String(w[0]._id), newBalance: user.balance, feeAmount, receiveAmount: amount, totalDebit } }, { status: 200 });
+    const userName = user?.fullName || user?.mobile || "User";
+    const text = `<b>💸 Withdraw Request</b>
+━━━━━━━━━━━━━━
+<b>Name:</b> ${escapeHtml(userName)}
+<b>Mobile:</b> ${escapeHtml(user.mobile || "") }
+<b>Amount:</b> ${escapeHtml(fmtBDT0(amount))}
+<b>Method:</b> ${escapeHtml(paymentMethod.toUpperCase())}
+<b>Type:</b> ${escapeHtml(accountType.toUpperCase())}
+<b>Receive Number:</b> ${escapeHtml(mobile)}${note ? `
+<b>Note:</b> ${escapeHtml(note)}` : ""}`;
+    const tg = await sendTelegramWithdraw({ text });
+
+    return NextResponse.json({ ok: true, message: tg.ok ? "Withdraw requested" : "Withdraw requested but Telegram failed", data: { withdrawId: String(w[0]._id), newBalance: user.balance, feeAmount, receiveAmount: amount, totalDebit }, telegram: tg.ok ? undefined : tg.message }, { status: 200 });
   } catch (e) {
     try { if (session) { await session.abortTransaction(); session.endSession(); } } catch {}
     return NextResponse.json({ ok: false, message: "Withdraw failed" }, { status: 500 });
