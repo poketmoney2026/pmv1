@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Funnel_Display } from "next/font/google";
-import { Loader2, Save, Settings2, Gift, Trophy, Percent, CalendarDays } from "lucide-react";
+import { Loader2, Save, Gift, Trophy, Percent } from "lucide-react";
 
 const funnelDisplay = Funnel_Display({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -34,11 +34,50 @@ function Box({ title, icon: Icon, children, pm }) {
   );
 }
 
-function Field({ label, value, onChange, pm }) {
+function Field({ label, value, onChange, pm, type = "text", min }) {
   return (
     <div>
       <div className="mb-2 text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>{label}</div>
-      <input value={value} onChange={onChange} className="w-full border px-3 py-3 text-sm outline-none" style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg }} />
+      <input
+        value={value}
+        onChange={onChange}
+        type={type}
+        min={min}
+        className="w-full border px-3 py-3 text-sm outline-none"
+        style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg }}
+      />
+    </div>
+  );
+}
+
+function RadioRow({ label, value, onChange, pm }) {
+  return (
+    <div>
+      <div className="mb-2 text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>{label}</div>
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { key: "yes", text: "Yes" },
+          { key: "no", text: "No" },
+        ].map((item) => {
+          const active = value === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className="border px-3 py-3 text-sm font-black tracking-widest uppercase"
+              style={{
+                borderColor: active ? "#ffffff" : pm.b20,
+                background: active ? pm.bg10 : pm.bg08,
+                color: pm.fg,
+                boxShadow: active ? "0 0 0 1px rgba(255,255,255,0.35) inset" : "none",
+              }}
+            >
+              {item.text}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -46,8 +85,14 @@ function Field({ label, value, onChange, pm }) {
 const EMPTY = {
   minDeposit: "",
   maxDeposit: "",
+  depositTimerHours: "1",
+  allowMultipleDeposits: "yes",
+  agentMinDepositBkash: "",
+  agentMinDepositNagad: "",
+  agentCommissionPercent: "0",
   minWithdraw: "",
   maxWithdraw: "",
+  withdrawTimerHours: "1",
   rechargeMinWithdraw: "20",
   rechargeMaxWithdraw: "",
   withdrawFee: "",
@@ -76,6 +121,37 @@ export default function AdminGeneralPage() {
 
   const setVal = (key, value) => setForm((s) => ({ ...s, [key]: value }));
 
+  const mapToForm = (next = {}, interestData = {}) => ({
+    minDeposit: next.minDeposit ?? "",
+    maxDeposit: next.maxDeposit ?? "",
+    depositTimerHours: next.depositTimerHours ?? 1,
+    allowMultipleDeposits: next.allowMultipleDeposits === false ? "no" : "yes",
+    agentMinDepositBkash: next.agentMinDepositBkash ?? "",
+    agentMinDepositNagad: next.agentMinDepositNagad ?? "",
+    agentCommissionPercent: next.agentCommissionPercent ?? 0,
+    minWithdraw: next.minWithdraw ?? "",
+    maxWithdraw: next.maxWithdraw ?? "",
+    withdrawTimerHours: next.withdrawTimerHours ?? 1,
+    rechargeMinWithdraw: next.rechargeMinWithdraw ?? 20,
+    rechargeMaxWithdraw: next.rechargeMaxWithdraw ?? "",
+    withdrawFee: next.withdrawFee ?? "",
+    dailyWithdrawLimit: next.dailyWithdrawLimit ?? "",
+    dailyAmountLimit: next.dailyAmountLimit ?? "",
+    claimCooldownSec: next.claimCooldownSec ?? 120,
+    noticeIntervalMin: next.noticeIntervalMin ?? 30,
+    firstReferralBonus: next.firstReferralBonus ?? 10,
+    regularReferralBonus: next.regularReferralBonus ?? 0,
+    welcomeBonus: next.welcomeBonus ?? 5,
+    giftBoxAmount: next.giftBoxAmount ?? 5,
+    firstPrize: next.firstPrize ?? 10000,
+    secondPrize: next.secondPrize ?? 5000,
+    thirdPrize: next.thirdPrize ?? 3000,
+    rank4to10Prize: next.rank4to10Prize ?? 2000,
+    rank11to50Prize: next.rank11to50Prize ?? 1000,
+    interestPercent: interestData?.data?.valuePercent ?? "",
+    interestDay: interestData?.data?.day ?? 12,
+  });
+
   useEffect(() => {
     let live = true;
     (async () => {
@@ -90,31 +166,7 @@ export default function AdminGeneralPage() {
         if (!live) return;
         if (!generalRes.ok) return toast.error(data?.message || "Failed to load settings");
         if (!interestRes.ok) return toast.error(interestData?.message || "Failed to load interest settings");
-        const next = data?.data || {};
-        setForm({
-          minDeposit: next.minDeposit ?? "",
-          maxDeposit: next.maxDeposit ?? "",
-          minWithdraw: next.minWithdraw ?? "",
-          maxWithdraw: next.maxWithdraw ?? "",
-          rechargeMinWithdraw: next.rechargeMinWithdraw ?? 20,
-          rechargeMaxWithdraw: next.rechargeMaxWithdraw ?? "",
-          withdrawFee: next.withdrawFee ?? "",
-          dailyWithdrawLimit: next.dailyWithdrawLimit ?? "",
-          dailyAmountLimit: next.dailyAmountLimit ?? "",
-          claimCooldownSec: next.claimCooldownSec ?? 120,
-          noticeIntervalMin: next.noticeIntervalMin ?? 30,
-          firstReferralBonus: next.firstReferralBonus ?? 10,
-          regularReferralBonus: next.regularReferralBonus ?? 0,
-          welcomeBonus: next.welcomeBonus ?? 5,
-          giftBoxAmount: next.giftBoxAmount ?? 5,
-          firstPrize: next.firstPrize ?? 10000,
-          secondPrize: next.secondPrize ?? 5000,
-          thirdPrize: next.thirdPrize ?? 3000,
-          rank4to10Prize: next.rank4to10Prize ?? 2000,
-          rank11to50Prize: next.rank11to50Prize ?? 1000,
-          interestPercent: interestData?.data?.valuePercent ?? "",
-          interestDay: interestData?.data?.day ?? 12,
-        });
+        setForm(mapToForm(data?.data || {}, interestData));
       } catch {
         if (live) toast.error("Network error");
       } finally {
@@ -127,7 +179,7 @@ export default function AdminGeneralPage() {
   const save = async () => {
     setSaving(true);
     try {
-      const payload = { ...form };
+      const payload = { ...form, allowMultipleDeposits: form.allowMultipleDeposits === "yes" };
       const interestPayload = {
         valuePercent: Number(String(form.interestPercent || "").trim() || 0),
         day: Number(String(form.interestDay || "").trim() || 12),
@@ -153,31 +205,7 @@ export default function AdminGeneralPage() {
       if (!res.ok) return toast.error(data?.message || "Save failed");
       if (!interestRes.ok) return toast.error(interestData?.message || "Interest save failed");
       toast.success(data?.message || "Saved");
-      const next = data?.data || {};
-      setForm({
-        minDeposit: next.minDeposit ?? "",
-        maxDeposit: next.maxDeposit ?? "",
-        minWithdraw: next.minWithdraw ?? "",
-        maxWithdraw: next.maxWithdraw ?? "",
-        rechargeMinWithdraw: next.rechargeMinWithdraw ?? 20,
-        rechargeMaxWithdraw: next.rechargeMaxWithdraw ?? "",
-        withdrawFee: next.withdrawFee ?? "",
-        dailyWithdrawLimit: next.dailyWithdrawLimit ?? "",
-        dailyAmountLimit: next.dailyAmountLimit ?? "",
-        claimCooldownSec: next.claimCooldownSec ?? 120,
-        noticeIntervalMin: next.noticeIntervalMin ?? 30,
-        firstReferralBonus: next.firstReferralBonus ?? 10,
-        regularReferralBonus: next.regularReferralBonus ?? 0,
-        welcomeBonus: next.welcomeBonus ?? 5,
-        giftBoxAmount: next.giftBoxAmount ?? 5,
-        firstPrize: next.firstPrize ?? 10000,
-        secondPrize: next.secondPrize ?? 5000,
-        thirdPrize: next.thirdPrize ?? 3000,
-        rank4to10Prize: next.rank4to10Prize ?? 2000,
-        rank11to50Prize: next.rank11to50Prize ?? 1000,
-        interestPercent: interestData?.data?.valuePercent ?? form.interestPercent ?? "",
-        interestDay: interestData?.data?.day ?? form.interestDay ?? 12,
-      });
+      setForm(mapToForm(data?.data || {}, interestData));
     } catch {
       toast.error("Network error");
     } finally {
@@ -188,13 +216,12 @@ export default function AdminGeneralPage() {
   return (
     <div className={`${funnelDisplay.className} min-h-screen px-4 py-6 pt-16 md:pt-6`} style={{ background: "var(--pm-bg-grad)", color: pm.fg }}>
       <div className="mx-auto max-w-md space-y-3 font-mono">
-        <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06, boxShadow: `0 0 0 1px ${pm.b20}` }}>
+        <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Admin</div>
               <div className="mt-1 text-lg font-black tracking-widest uppercase">General Settings</div>
             </div>
-            <span className="grid h-11 w-11 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}><Settings2 className="h-5 w-5" /></span>
           </div>
         </div>
 
@@ -205,11 +232,20 @@ export default function AdminGeneralPage() {
             <Box title="Deposit Box" pm={pm}>
               <Field pm={pm} label="Minimum Deposit" value={form.minDeposit} onChange={(e) => setVal("minDeposit", e.target.value)} />
               <Field pm={pm} label="Maximum Deposit" value={form.maxDeposit} onChange={(e) => setVal("maxDeposit", e.target.value)} />
+              <Field pm={pm} label="Timer (Hours)" type="number" min="0" value={form.depositTimerHours} onChange={(e) => setVal("depositTimerHours", e.target.value)} />
+              <RadioRow pm={pm} label="Multiple Deposit" value={form.allowMultipleDeposits} onChange={(value) => setVal("allowMultipleDeposits", value)} />
+            </Box>
+
+            <Box title="Agent Deposit Box" pm={pm}>
+              <Field pm={pm} label="Nagad Minimum Deposit" value={form.agentMinDepositNagad} onChange={(e) => setVal("agentMinDepositNagad", e.target.value)} />
+              <Field pm={pm} label="bKash Minimum Deposit" value={form.agentMinDepositBkash} onChange={(e) => setVal("agentMinDepositBkash", e.target.value)} />
+              <Field pm={pm} label="Agent Commission (%)" value={form.agentCommissionPercent} onChange={(e) => setVal("agentCommissionPercent", e.target.value)} />
             </Box>
 
             <Box title="Withdraw Box" pm={pm}>
               <Field pm={pm} label="Minimum Withdraw (bKash / Nagad)" value={form.minWithdraw} onChange={(e) => setVal("minWithdraw", e.target.value)} />
               <Field pm={pm} label="Maximum Withdraw (bKash / Nagad)" value={form.maxWithdraw} onChange={(e) => setVal("maxWithdraw", e.target.value)} />
+              <Field pm={pm} label="Timer (Hours)" type="number" min="0" value={form.withdrawTimerHours} onChange={(e) => setVal("withdrawTimerHours", e.target.value)} />
               <Field pm={pm} label="Minimum Withdraw (Mobile Recharge)" value={form.rechargeMinWithdraw} onChange={(e) => setVal("rechargeMinWithdraw", e.target.value)} />
               <Field pm={pm} label="Maximum Withdraw (Mobile Recharge)" value={form.rechargeMaxWithdraw} onChange={(e) => setVal("rechargeMaxWithdraw", e.target.value)} />
               <Field pm={pm} label="Withdraw Fee (%)" value={form.withdrawFee} onChange={(e) => setVal("withdrawFee", e.target.value)} />
@@ -243,7 +279,9 @@ export default function AdminGeneralPage() {
             </Box>
 
             <button type="button" onClick={save} disabled={saving} className="w-full border py-3 text-sm font-black tracking-widest uppercase disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>
-              <span className="inline-flex items-center justify-center gap-2">{saving ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</> : <><Save className="h-4 w-4" />Save Settings</>}</span>
+              <span className="inline-flex items-center justify-center gap-2">
+                {saving ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</> : <><Save className="h-4 w-4" />Save Settings</>}
+              </span>
             </button>
           </>
         )}

@@ -19,10 +19,11 @@ const userSchema = new Schema(
     withdraw: [{ type: Schema.Types.ObjectId, ref: "Withdraw", default: [] }],
     deposit: [{ type: Schema.Types.ObjectId, ref: "Deposit", default: [] }],
     transactions: [{ type: Schema.Types.ObjectId, ref: "Transaction", default: [] }],
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: { type: String, enum: ["user", "agent", "admin"], default: "user" },
     giftNoticeOpen: { type: Boolean, default: false },
     giftNoticeAmount: { type: Number, default: 0 },
     giftNoticeUpdatedAt: { type: Date, default: null },
+    chatLastSeenAt: { type: Date, default: null, index: true },
   },
   { timestamps: true }
 );

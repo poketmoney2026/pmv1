@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Loader2,
   X,
+  Receipt,
+  Bell,
 } from "lucide-react";
 
 function usePM() {
@@ -113,7 +115,10 @@ export default function AdminAddBalancePage() {
   const [amount, setAmount] = useState("");
   const [amountTouched, setAmountTouched] = useState(false);
   const [mode, setMode] = useState("plus");
+  const [sendNotice, setSendNotice] = useState(false);
+  const [noticeText, setNoticeText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [targetScope, setTargetScope] = useState("specific");
   const [giftModal, setGiftModal] = useState(false);
   const [giftChoice, setGiftChoice] = useState("default");
   const [confirmedGiftChoice, setConfirmedGiftChoice] = useState("default");
@@ -135,7 +140,7 @@ export default function AdminAddBalancePage() {
   const identifierValid = useMemo(() => /^01\d{9}$/.test(identifier.trim().replace(/\D/g, '').slice(0, 11)), [identifier]);
   const amountNumber = useMemo(() => Number(amount || 0), [amount]);
   const amountValid = useMemo(() => Number.isFinite(amountNumber) && amountNumber > 0, [amountNumber]);
-  const canSubmit = identifierValid && (mode === 'gift' ? true : amountValid) && !loading;
+  const canSubmit = (targetScope === "all" ? mode === "gift" : identifierValid) && (mode === 'gift' ? true : amountValid) && !loading;
 
   const openGiftChooser = () => {
     setGiftChoice(confirmedGiftChoice || 'default');
@@ -153,7 +158,7 @@ export default function AdminAddBalancePage() {
   };
 
   const handleSend = async () => {
-    setIdentifierTouched(true);
+    if (targetScope === "specific") setIdentifierTouched(true);
     setAmountTouched(true);
     if (!canSubmit || loading) return;
     if (mode === 'gift' && confirmedGiftChoice === 'custom' && !amountValid) return;
@@ -162,9 +167,12 @@ export default function AdminAddBalancePage() {
     try {
       const payload = {
         identifier: identifier.trim(),
+        targetScope,
         amount: mode === 'gift' && confirmedGiftChoice === 'default' ? Number(defaultGiftAmount || 0) : amountNumber,
         mode,
         giftOption: mode === 'gift' ? confirmedGiftChoice : undefined,
+        sendNotice,
+        noticeText,
       };
       const res = await fetch('/api/admin/balance', {
         method: 'POST',
@@ -205,18 +213,36 @@ export default function AdminAddBalancePage() {
 
         <Block pm={pm} title="Balance Form">
           <div className="space-y-3">
-            <Field pm={pm} icon={Phone} label="User Mobile" type="number" placeholder="01XXXXXXXXX" value={identifier} onChange={(e) => { setIdentifierTouched(true); setIdentifier(e.target.value); }} />
-            <ValidateLine pm={pm} touched={identifierTouched} ok={identifierValid} warnText="Please enter a valid mobile number." tipText="Use 11 digit mobile number." />
+            <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
+              <div className="mb-2 text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg80 }}>Target</div>
+              <div className="grid grid-cols-2 gap-2">
+                <ModeBtn pm={pm} active={targetScope === 'specific'} onClick={() => setTargetScope('specific')} icon={Phone} label="SPECIFIC" />
+                <ModeBtn pm={pm} active={targetScope === 'all'} onClick={() => setTargetScope('all')} icon={Gift} label="ALL USERS" />
+              </div>
+              <div className="mt-2 text-[11px]" style={{ color: pm.fg75 }}>All users option এখন <span className="font-black" style={{ color: pm.fg }}>Gift</span> mode-এর জন্য ব্যবহার করা যাবে।</div>
+            </div>
+
+            {targetScope === 'specific' ? (
+              <>
+                <Field pm={pm} icon={Phone} label="User Mobile" type="number" placeholder="01XXXXXXXXX" value={identifier} onChange={(e) => { setIdentifierTouched(true); setIdentifier(e.target.value); }} />
+                <ValidateLine pm={pm} touched={identifierTouched} ok={identifierValid} warnText="Please enter a valid mobile number." tipText="Use 11 digit mobile number." />
+              </>
+            ) : (
+              <div className="border px-3 py-3 text-[11px]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg75 }}>
+                সক্রিয় user এবং agent account-এ একই gift amount পাঠানো হবে।
+              </div>
+            )}
 
             <Field pm={pm} icon={Coins} label="Amount" placeholder="e.g. 100" value={amount} onChange={(e) => { setAmountTouched(true); setAmount(e.target.value.replace(/[^\d.]/g, '')); }} />
             <ValidateLine pm={pm} touched={amountTouched} ok={amountValid} warnText="Amount must be greater than 0." tipText={mode === 'gift' ? 'Custom amount is optional if you use the default gift amount.' : 'Enter a positive amount.'} />
 
             <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
               <div className="mb-2 text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg80 }}>Mode</div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <ModeBtn pm={pm} active={mode === 'plus'} onClick={() => setMode('plus')} icon={Plus} label="PLUS" />
                 <ModeBtn pm={pm} active={mode === 'minus'} onClick={() => setMode('minus')} icon={Minus} label="MINUS" />
                 <ModeBtn pm={pm} active={mode === 'gift'} onClick={() => setMode('gift')} icon={Gift} label="GIFT" />
+                <ModeBtn pm={pm} active={mode === 'deposit'} onClick={() => setMode('deposit')} icon={Receipt} label="DEPOSIT" />
               </div>
               {mode === 'gift' ? (
                 <div className="mt-3 space-y-2">
@@ -230,6 +256,17 @@ export default function AdminAddBalancePage() {
               ) : (
                 <div className="mt-2 text-[11px]" style={{ color: pm.fg75 }}>Selected mode: <span className="font-black" style={{ color: pm.fg }}>{mode.toUpperCase()}</span></div>
               )}
+            </div>
+
+
+
+            <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}>
+              <div className="mb-2 text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg80 }}>Notice</div>
+              <label className="flex items-center gap-3 border px-3 py-3 text-sm" style={{ borderColor: pm.b28, background: pm.bg10 }}>
+                <input type="checkbox" checked={sendNotice} onChange={(e) => setSendNotice(e.target.checked)} />
+                <span className="inline-flex items-center gap-2"><Bell className="h-4 w-4" /> Send modal note with amount</span>
+              </label>
+              {sendNotice ? <textarea rows={4} value={noticeText} onChange={(e) => setNoticeText(e.target.value)} placeholder="Write a short note for the user" className="mt-3 w-full resize-none border px-3 py-3 text-sm outline-none" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} /> : null}
             </div>
 
             <button type="button" onClick={handleSend} disabled={!canSubmit} className="w-full border py-3 text-sm font-black active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed" style={{ borderColor: mode === 'gift' ? pm.b35 : pm.b28, background: mode === 'gift' ? pm.bg12 : pm.bg10, color: pm.fg }}>

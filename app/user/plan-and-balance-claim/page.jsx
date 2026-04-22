@@ -344,7 +344,7 @@ export default function PlanAndBalanceClaimPage() {
       }
       const d = j?.data || {};
       setInterestPercent(Number(d?.interestPercent || 0));
-      setDaysTotal(Math.max(1, Math.min(30, Number(d?.daysTotal || 12))));
+      setDaysTotal(Math.max(1, Number(d?.daysTotal || 12)));
       setClaimCooldownSec(Math.max(1, Number(d?.claimCooldownSec || 120)));
       setItems(Array.isArray(d?.items) ? d.items : []);
     } catch {

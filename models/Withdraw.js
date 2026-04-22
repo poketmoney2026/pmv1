@@ -18,6 +18,7 @@ const WithdrawSchema = new Schema(
     paymentProof: { type: String, default: "" },
     status: { type: String, enum: ["pending", "processing", "successful", "reject"], default: "pending", index: true },
     date: { type: Date, default: Date.now, index: true },
+    processingExpiresAt: { type: Date, default: null, index: true },
   },
   { timestamps: true, collection: "withdraws" }
 );

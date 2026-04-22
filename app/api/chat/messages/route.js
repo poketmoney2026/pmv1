@@ -26,6 +26,11 @@ async function sendTelegramFirstMessage({ user, text, imageUrl, createdAt }) {
   }).catch(() => null);
 }
 
+async function markChatSeen(userId) {
+  if (!userId) return;
+  await User.updateOne({ _id: userId }, { $set: { chatLastSeenAt: new Date() } }).catch(() => null);
+}
+
 async function getThreadForAuth(auth, threadId) {
   if (!threadId || !mongoose.Types.ObjectId.isValid(threadId)) return null;
   const thread = await ChatThread.findById(threadId).lean();
@@ -40,6 +45,7 @@ export async function GET(req) {
   const auth = await getAuthUserFromRequest(req, { allowInactive: false });
   if (!auth.ok) return auth.res;
   await dbConnect();
+  await markChatSeen(auth.userId);
 
   const { searchParams } = new URL(req.url);
   let threadId = String(searchParams.get("threadId") || "");
@@ -85,6 +91,7 @@ export async function POST(req) {
   const auth = await getAuthUserFromRequest(req, { allowInactive: false });
   if (!auth.ok) return auth.res;
   await dbConnect();
+  await markChatSeen(auth.userId);
 
   const body = await req.json().catch(() => ({}));
   const role = String(auth.user.role || "user");

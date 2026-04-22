@@ -15,6 +15,11 @@ const DepositSchema = new mongoose.Schema(
     note: { type: String, default: "" },
     createdDate: { type: Date, default: null },
     claimDate: { type: Date, default: null },
+    processingExpiresAt: { type: Date, default: null, index: true },
+    approvedById: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
+    approvedByRole: { type: String, default: "" },
+    approvedByName: { type: String, default: "" },
+    creditedMode: { type: String, enum: ["plan", "balance"], default: "plan" },
   },
   { timestamps: true }
 );

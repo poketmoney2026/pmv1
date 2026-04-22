@@ -30,15 +30,15 @@ function PrizeCard({ title, amount, pm }) {
 }
 
 function Countdown({ nextGiveawayAt }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => { const t = setInterval(() => setTick((v) => v + 1), 1000); return () => clearInterval(t); }, []);
-  const diff = Math.max(0, Number(nextGiveawayAt || 0) - Date.now());
+  const [nowMs, setNowMs] = useState(0);
+  useEffect(() => { const t = setInterval(() => setNowMs(Date.now()), 1000); setNowMs(Date.now()); return () => clearInterval(t); }, []);
+  const diff = nowMs > 0 ? Math.max(0, Number(nextGiveawayAt || 0) - nowMs) : 0;
   const total = Math.floor(diff / 1000);
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
-  return <div key={tick} className="font-black tabular-nums tracking-widest">{String(days).padStart(2, '0')}:{String(hours).padStart(2, '0')}:{String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}</div>;
+  return <div className="font-black tabular-nums tracking-widest">{String(days).padStart(2, '0')}:{String(hours).padStart(2, '0')}:{String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}</div>;
 }
 
 function ConfirmModal({ open, onClose, onConfirm, pm, busy }) {

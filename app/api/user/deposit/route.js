@@ -27,10 +27,32 @@ async function sendTelegramInvoice({ text }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, message: "TELEGRAM_ENV_MISSING" };
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }) });
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+  });
   const j = await res.json().catch(() => ({}));
   if (!res.ok || !j?.ok) return { ok: false, message: j?.description || "TELEGRAM_SEND_FAILED" };
   return { ok: true };
+}
+
+function buildRow(created, user) {
+  const userName = user?.name || user?.fullName || user?.mobile || "User";
+  return {
+    _id: String(created._id),
+    userId: String(user._id).slice(-6),
+    userName,
+    createdAt: created.createdAt,
+    mobile: created.senderNumber || "—",
+    method: created.paymentMethod,
+    amount: created.amount,
+    verifyVia: created.verifyMode,
+    status: created.status,
+    trxId: created.trxId || "",
+    screenshotUrl: created.screenshotUrl || "",
+    processingExpiresAt: created.processingExpiresAt || null,
+  };
 }
 
 export async function POST(req) {
@@ -54,20 +76,79 @@ export async function POST(req) {
 
   await dbConnect();
   const [user, settings] = await Promise.all([
-    User.findById(userId).select("_id name fullName mobile status").lean(),
+    User.findById(userId).select("_id name fullName mobile status role").lean(),
     GeneralSettings.findOne({ key: "global" }).lean(),
   ]);
-  if (!user) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
-  if (String(user.status || "active") !== "active") return NextResponse.json({ ok: false, message: "Your account is inactive. Please contact support." }, { status: 403 });
-  if (settings?.minDeposit !== null && settings?.minDeposit !== undefined && amount < Number(settings.minDeposit)) return NextResponse.json({ ok: false, message: "Minimum deposit not reached" }, { status: 400 });
-  if (settings?.maxDeposit !== null && settings?.maxDeposit !== undefined && amount > Number(settings.maxDeposit)) return NextResponse.json({ ok: false, message: "Maximum deposit exceeded" }, { status: 400 });
 
-  const created = await Deposit.create({ userId, amount, paymentMethod, verifyMode, senderNumber: verifyMode === "number" ? senderNumber : "", trxId: verifyMode === "trx" ? trxId.trim() : "", screenshotUrl: verifyMode === "screenshot" ? screenshotUrl : "", status: "processing", note: "" });
+  if (!user) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  if (String(user.status || "active") !== "active") {
+    return NextResponse.json({ ok: false, message: "Your account is inactive. Please contact support." }, { status: 403 });
+  }
+  const userRole = String(user?.role || "user").toLowerCase();
+  const roleBasedMin = userRole === "agent"
+    ? Number(paymentMethod === "nagad" ? (settings?.agentMinDepositNagad ?? 0) : (settings?.agentMinDepositBkash ?? 0))
+    : Number(settings?.minDeposit ?? 0);
+  if (roleBasedMin > 0 && amount < roleBasedMin) {
+    const methodLabel = paymentMethod === "nagad" ? "Nagad" : "bKash";
+    const message = userRole === "agent"
+      ? `Minimum ${methodLabel} deposit for agent is Tk ${roleBasedMin}`
+      : "Minimum deposit not reached";
+    return NextResponse.json({ ok: false, message, data: { minAmount: roleBasedMin, role: userRole, paymentMethod } }, { status: 400 });
+  }
+  if (settings?.maxDeposit !== null && settings?.maxDeposit !== undefined && amount > Number(settings.maxDeposit)) {
+    return NextResponse.json({ ok: false, message: "Maximum deposit exceeded" }, { status: 400 });
+  }
+
+  const allowMultipleDeposits = settings?.allowMultipleDeposits !== false;
+  if (!allowMultipleDeposits) {
+    const existingProcessing = await Deposit.findOne({ userId, status: "processing" }).sort({ createdAt: -1 }).select("_id processingExpiresAt").lean();
+    if (existingProcessing) {
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "PROCESSING_DEPOSIT_EXISTS",
+          message: "আপনার একটি ডিপোজিট বর্তমানে প্রসেসিং অবস্থায় আছে। এটি সফল বা সম্পন্ন হলে আপনি আবার নতুন করে ডিপোজিট তৈরি করতে পারবেন।",
+          data: { processingDeposit: existingProcessing },
+        },
+        { status: 409 }
+      );
+    }
+  }
+
+  const timerHours = Math.max(0, Number(settings?.depositTimerHours ?? 1));
+  const processingExpiresAt = timerHours > 0 ? new Date(Date.now() + timerHours * 60 * 60 * 1000) : null;
+
+  const created = await Deposit.create({
+    userId,
+    amount,
+    paymentMethod,
+    verifyMode,
+    senderNumber: verifyMode === "number" ? senderNumber : "",
+    trxId: verifyMode === "trx" ? trxId.trim() : "",
+    screenshotUrl: verifyMode === "screenshot" ? screenshotUrl : "",
+    status: "processing",
+    note: "",
+    processingExpiresAt,
+  });
+
   const userName = user?.name || user?.fullName || user?.mobile || "User";
-  const verifyLine = verifyMode === "number" ? `<b>Sender:</b> ${escapeHtml(senderNumber)}` : verifyMode === "trx" ? `<b>TrxId:</b> ${escapeHtml(trxId.trim())}` : `<b>Screenshot:</b> ${escapeHtml(screenshotUrl)}`;
+  const verifyLine =
+    verifyMode === "number"
+      ? `<b>Sender:</b> ${escapeHtml(senderNumber)}`
+      : verifyMode === "trx"
+      ? `<b>TrxId:</b> ${escapeHtml(trxId.trim())}`
+      : `<b>Screenshot:</b> ${escapeHtml(screenshotUrl)}`;
   const text = `<b>✅ Deposit Request</b>\n━━━━━━━━━━━━━━\n<b>Name:</b> ${escapeHtml(userName)}\n<b>Amount:</b> ${escapeHtml(fmtBDT0(amount))}\n<b>Method:</b> ${escapeHtml(paymentMethod.toUpperCase())}\n${verifyLine}`;
   const tg = await sendTelegramInvoice({ text });
-  if (!tg.ok) return NextResponse.json({ ok: false, message: "Saved but Telegram failed", error: tg.message }, { status: 500 });
-  const row = { _id: String(created._id), userId: String(user._id).slice(-6), userName, createdAt: created.createdAt, mobile: created.senderNumber || "—", method: created.paymentMethod, amount: created.amount, verifyVia: created.verifyMode, status: created.status, trxId: created.trxId || "", screenshotUrl: created.screenshotUrl || "" };
+
+  const row = buildRow(created, user);
+
+  if (!tg.ok) {
+    return NextResponse.json(
+      { ok: false, message: "Saved but Telegram failed", error: tg.message, data: { item: row } },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json({ ok: true, message: "Deposit request successful", data: { item: row } }, { status: 200 });
 }

@@ -9,6 +9,7 @@ let poller = null;
 let visibilityBound = false;
 let inFlight = null;
 let lastFetchAt = 0;
+let lastSnapshotSignature = "";
 
 async function readSnapshot(force = false) {
   const now = Date.now();
@@ -40,6 +41,30 @@ const defaultSupport = {
   contactTelegramGroup: "",
 };
 
+const defaultSiteUpdate = {
+  startAt: null,
+  endAt: null,
+  notifyEveryMin: 30,
+  isActive: false,
+  updatedAt: null,
+};
+
+function buildSnapshotSignature(snapshot = {}) {
+  return JSON.stringify({
+    authenticated: Boolean(snapshot?.authenticated),
+    role: snapshot?.role || "user",
+    status: snapshot?.status || "guest",
+    sessionState: snapshot?.sessionState || "guest",
+    support: snapshot?.support || {},
+    balance: Number(snapshot?.balance || 0),
+    inactiveReason: snapshot?.inactiveReason || "",
+    notice: snapshot?.notice || {},
+    siteUpdate: snapshot?.siteUpdate || {},
+    giftNotice: snapshot?.giftNotice || {},
+    user: snapshot?.user || null,
+  });
+}
+
 const invalidState = {
   liveReady: true,
   authenticated: false,
@@ -49,7 +74,8 @@ const invalidState = {
   balance: 0,
   balanceReady: false,
   inactiveReason: "",
-  notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30 },
+  notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30, maxShows: 0, type: "modal", targetMobile: "" },
+  siteUpdate: defaultSiteUpdate,
   giftNotice: { open: false, amount: 0, updatedAt: null },
   lastSyncedAt: Date.now(),
 };
@@ -65,15 +91,21 @@ const useLiveAppStore = create(
     balance: 0,
     balanceReady: false,
     inactiveReason: "",
-    notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30 },
+    notice: { title: "NOTICE", body: "", isActive: false, updatedAt: null, intervalMin: 30, maxShows: 0, type: "modal", targetMobile: "" },
+    siteUpdate: defaultSiteUpdate,
     giftNotice: { open: false, amount: 0, updatedAt: null },
     user: null,
     currentPath: "/",
     lastSyncedAt: 0,
 
     applySnapshot: (snapshot = {}) => {
+      const signature = buildSnapshotSignature(snapshot);
+      const current = get();
+      if (signature === lastSnapshotSignature && current.liveReady) return;
+      lastSnapshotSignature = signature;
       const authenticated = Boolean(snapshot?.authenticated);
-      const role = String(snapshot?.role || "user").toLowerCase() === "admin" ? "admin" : "user";
+      const rawRole = String(snapshot?.role || "user").toLowerCase();
+      const role = ["admin", "agent", "user"].includes(rawRole) ? rawRole : "user";
       const status = String(snapshot?.status || (authenticated ? "active" : "guest")).toLowerCase();
       const sessionState = String(snapshot?.sessionState || (status === "inactive" ? "inactive" : authenticated ? "ok" : "guest")).toLowerCase();
       const support = {
@@ -87,6 +119,16 @@ const useLiveAppStore = create(
         isActive: snapshot?.notice?.isActive !== false,
         updatedAt: snapshot?.notice?.updatedAt || null,
         intervalMin: Number(snapshot?.notice?.intervalMin || 30),
+        maxShows: Number(snapshot?.notice?.maxShows || 0),
+        type: snapshot?.notice?.type === "news" ? "news" : "modal",
+        targetMobile: snapshot?.notice?.targetMobile || "",
+      };
+      const nextSiteUpdate = {
+        startAt: snapshot?.siteUpdate?.startAt || null,
+        endAt: snapshot?.siteUpdate?.endAt || null,
+        notifyEveryMin: Number(snapshot?.siteUpdate?.notifyEveryMin || 30),
+        isActive: Boolean(snapshot?.siteUpdate?.isActive),
+        updatedAt: snapshot?.siteUpdate?.updatedAt || null,
       };
       const next = {
         liveReady: true,
@@ -97,6 +139,7 @@ const useLiveAppStore = create(
         support,
         inactiveReason: snapshot?.inactiveReason || "",
         notice: nextNotice,
+        siteUpdate: nextSiteUpdate,
         giftNotice: {
           open: Boolean(snapshot?.giftNotice?.open),
           amount: Number(snapshot?.giftNotice?.amount || 0),
@@ -105,7 +148,7 @@ const useLiveAppStore = create(
         user: snapshot?.user || null,
         lastSyncedAt: Date.now(),
       };
-      if (role === "user" && authenticated) {
+      if (role !== "admin" && authenticated) {
         next.balance = Number(snapshot?.balance || 0);
         next.balanceReady = true;
       } else if (!authenticated) {

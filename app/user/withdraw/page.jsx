@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { OdometerText, useAnimatedCountdown } from "@/components/OdometerText";
 import {
   Wallet,
   Clock,
@@ -138,111 +139,19 @@ function KV({ label, value }) {
   );
 }
 
-function pad2(n) {
-  return String(Math.max(0, Math.floor(Number(n || 0)))).padStart(2, "0");
-}
-
-function DigitColumn({ digit, duration = 220, pulse = 0 }) {
-  const d = Math.max(0, Math.min(9, Number(digit || 0)));
-  const [flash, setFlash] = useState(false);
-
-  useEffect(() => {
-    if (pulse <= 0) return;
-    setFlash(true);
-    const t = setTimeout(() => setFlash(false), 320);
-    return () => clearTimeout(t);
-  }, [pulse]);
-
-  return (
-    <span
-      className={["pm-odo-col", flash ? "pm-odo-flash" : ""].join(" ")}
-      style={{
-        ["--pm-odo-y"]: `${d * 1.05}em`,
-        ["--pm-odo-ms"]: `${duration}ms`,
-      }}
-      aria-hidden="true"
-    >
-      <span className="pm-odo-strip">
-        <span>0</span>
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>4</span>
-        <span>5</span>
-        <span>6</span>
-        <span>7</span>
-        <span>8</span>
-        <span>9</span>
-      </span>
-    </span>
-  );
-}
-
-function OdoText({ value, pulse }) {
-  const chars = String(value || "");
-  return (
-    <span className="pm-odo" aria-label={value}>
-      {chars.split("").map((ch, i) => {
-        if (/\d/.test(ch)) {
-          const ms = 190 + ((i * 29) % 120);
-          return <DigitColumn key={i} digit={ch} duration={ms} pulse={pulse} />;
-        }
-        return (
-          <span key={i} className="pm-odo-sep">
-            {ch}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
 function CountdownOdo({
   secondsLeft = 0,
   autoTick = false,
   fullSize = false,
   label = "COUNTDOWN",
 }) {
-  const [liveSecLeft, setLiveSecLeft] = useState(
-    Math.max(0, Number(secondsLeft || 0))
-  );
+  const [target, setTarget] = useState(() => new Date(Date.now() + Math.max(0, Number(secondsLeft || 0)) * 1000).toISOString());
 
   useEffect(() => {
-    setLiveSecLeft(Math.max(0, Number(secondsLeft || 0)));
-  }, [secondsLeft]);
+    setTarget(new Date(Date.now() + Math.max(0, Number(secondsLeft || 0)) * 1000).toISOString());
+  }, [secondsLeft, autoTick]);
 
-  useEffect(() => {
-    if (!autoTick) return;
-    if (liveSecLeft <= 0) return;
-    const t = setInterval(() => {
-      setLiveSecLeft((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(t);
-  }, [autoTick, liveSecLeft]);
-
-  const secLeft = Math.max(
-    0,
-    Number(autoTick ? liveSecLeft : Number(secondsLeft || 0))
-  );
-  const hh = pad2(Math.floor(secLeft / 3600));
-  const mm = pad2(Math.floor((secLeft % 3600) / 60));
-  const ss = pad2(secLeft % 60);
-
-  const display = `${hh}:${mm}:${ss}`;
-
-  const [pulse, setPulse] = useState(0);
-  const prev = useRef(null);
-
-  useEffect(() => {
-    if (prev.current === null) {
-      prev.current = display;
-      return;
-    }
-    if (display !== prev.current) {
-      setPulse((p) => p + 1);
-      prev.current = display;
-    }
-  }, [display]);
+  const { value, pulse } = useAnimatedCountdown(target);
 
   if (fullSize) {
     return (
@@ -255,7 +164,7 @@ function CountdownOdo({
             {label}
           </div>
           <div className="mt-3 text-[clamp(34px,10vw,56px)] font-black tabular-nums leading-none">
-            <OdoText value={display} pulse={pulse} />
+            <OdometerText value={value} pulse={pulse} durationBase={460} durationSpread={180} flashMs={520} />
           </div>
         </div>
       </div>
@@ -263,17 +172,17 @@ function CountdownOdo({
   }
 
   return (
-    <div className="inline-flex items-center gap-2">
-      <div
-        className="border px-3 py-2 pm-soft-border pm-soft-bg"
-        style={{ color: "var(--pm-fg)" }}
-      >
+    <div
+      className={["border px-3 py-2 pm-soft-border pm-soft-bg", label ? "" : "px-0 py-0 border-0 bg-transparent"].join(" ")}
+      style={{ color: "var(--pm-fg)" }}
+    >
+      {label ? (
         <div className="text-[10px] font-bold tracking-widest uppercase pm-muted">
           {label}
         </div>
-        <div className="mt-1 text-[30px] font-black tabular-nums leading-none">
-          <OdoText value={display} pulse={pulse} />
-        </div>
+      ) : null}
+      <div className={[label ? "mt-1 text-[24px]" : "text-[16px]", "font-black tabular-nums leading-none"].join(" ")}>
+        <OdometerText value={value} pulse={pulse} durationBase={460} durationSpread={180} flashMs={520} />
       </div>
     </div>
   );
@@ -1166,6 +1075,17 @@ export default function WithdrawPage() {
                     <KV label="TYPE" value={typeLabel(h.accountType)} />
                     <KV label="NOTE" value={h.note ? h.note : "—"} />
                     <KV label="TIME" value={formatDateTime(h.createdAt)} />
+                    {(["pending", "processing"].includes(String(h.status || "").toLowerCase()) && h.processingExpiresAt) ? (
+                      <div className="pt-1">
+                        <div className="flex items-center justify-between gap-3 border px-3 py-2 pm-soft-border pm-soft-bg" style={{ color: "var(--pm-fg)" }}>
+                          <div className="text-[10px] font-bold tracking-widest uppercase pm-muted">TIMER</div>
+                          <div className="inline-flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <CountdownOdo secondsLeft={Math.max(0, Math.floor((new Date(h.processingExpiresAt).getTime() - Date.now()) / 1000))} autoTick label={null} />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                   {h.paymentProof ? (
                     <div className="mt-3 border p-2 pm-soft-border pm-soft-bg">

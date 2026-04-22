@@ -1,12 +1,12 @@
-// app/api/user/deposit/history/route.js
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import Deposit from "@/models/Deposit";
+import GeneralSettings from "@/models/GeneralSettings";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
 
 async function getAuthUserId() {
   const cookieStore = await cookies();
@@ -30,10 +30,13 @@ export async function GET(req) {
 
   await dbConnect();
 
-  const user = await User.findById(userId).select("_id name fullName mobile status").lean();
-  if (!user) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  const [user, items, settings] = await Promise.all([
+    User.findById(userId).select("_id name fullName mobile status role").lean(),
+    Deposit.find({ userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    GeneralSettings.findOne({ key: "global" }).lean(),
+  ]);
 
-  const items = await Deposit.find({ userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+  if (!user) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
 
   const userName = user?.name || user?.fullName || user?.mobile || "User";
 
@@ -50,7 +53,24 @@ export async function GET(req) {
     trxId: d.trxId || "",
     screenshotUrl: d.screenshotUrl || "",
     paymentProofImageUrl: d.paymentProofImageUrl || "",
+    processingExpiresAt: d.processingExpiresAt || null,
   }));
 
-  return NextResponse.json({ ok: true, data: { items: mapped } }, { status: 200 });
+  return NextResponse.json(
+    {
+      ok: true,
+      data: {
+        items: mapped,
+        settings: {
+          allowMultipleDeposits: settings?.allowMultipleDeposits !== false,
+          depositTimerHours: Number(settings?.depositTimerHours ?? 1),
+          minDeposit: Number(settings?.minDeposit ?? 0),
+          agentMinDepositBkash: Number(settings?.agentMinDepositBkash ?? 0),
+          agentMinDepositNagad: Number(settings?.agentMinDepositNagad ?? 0),
+          role: String(user?.role || "user").toLowerCase(),
+        },
+      },
+    },
+    { status: 200 }
+  );
 }

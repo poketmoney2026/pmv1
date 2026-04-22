@@ -178,7 +178,7 @@ export default function Contact() {
               <FiArrowLeft className="h-4 w-4" /> Back
             </Link>
             <div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg90 }}>
-              CONTACT SUPPORT
+              CONTACT
             </div>
             <span className="w-[64px]" />
           </div>
@@ -189,7 +189,7 @@ export default function Contact() {
             <ActionLink
               pm={pm}
               href={data.whatsappLink}
-              label="WhatsApp Support"
+              label="WhatsApp Contact"
               sub={loading ? "Loading..." : data.whatsappLink ? "Opens chat in a new tab" : "Not configured"}
               icon={PhoneCall}
               disabled={whatsappDisabled}
@@ -198,7 +198,7 @@ export default function Contact() {
             <ActionLink
               pm={pm}
               href={data.telegramLink}
-              label="Telegram Support"
+              label="Telegram Contact"
               sub={loading ? "Loading..." : data.telegramLink ? "Opens chat in a new tab" : "Not configured"}
               icon={Send}
               disabled={telegramDisabled}
@@ -216,7 +216,7 @@ export default function Contact() {
           </div>
 
           <div className="mt-3 text-[10px] tracking-widest uppercase" style={{ color: pm.fg70 }}>
-            Support links are loaded from server.
+            Contact links are loaded from server.
           </div>
         </Block>
       </div>

@@ -95,16 +95,16 @@ function formatDateTime(value) {
 }
 
 function Countdown({ nextGiveawayAt }) {
-  const [tick, setTick] = useState(0);
-  useEffect(() => { const t = setInterval(() => setTick((v) => v + 1), 1000); return () => clearInterval(t); }, []);
-  const diff = Math.max(0, Number(nextGiveawayAt || 0) - Date.now());
+  const [nowMs, setNowMs] = useState(0);
+  useEffect(() => { const t = setInterval(() => setNowMs(Date.now()), 1000); setNowMs(Date.now()); return () => clearInterval(t); }, []);
+  const diff = nowMs > 0 ? Math.max(0, Number(nextGiveawayAt || 0) - nowMs) : 0;
   const total = Math.floor(diff / 1000);
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
   const value = `${String(days).padStart(2, "0")}:${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  return <div key={tick} className="font-black tabular-nums tracking-widest text-[24px] md:text-[30px]">{value}</div>;
+  return <div className="font-black tabular-nums tracking-widest text-[24px] md:text-[30px]">{value}</div>;
 }
 
 function DetailModal({ open, onClose, detail, loading, pm }) {

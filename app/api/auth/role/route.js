@@ -7,7 +7,8 @@ export async function GET(req) {
   const auth = await getAuthUserFromRequest(req, { allowInactive: true });
   if (!auth.ok) return auth.res;
 
-  const role = String(auth.user.role || "user").toLowerCase() === "admin" ? "admin" : "user";
+  const rawRole = String(auth.user.role || "user").toLowerCase();
+  const role = ["admin", "agent", "user"].includes(rawRole) ? rawRole : "user";
   const status = String(auth.user.status || "active").toLowerCase();
 
   if (status !== "active") {

@@ -14,7 +14,7 @@ async function signToken(userId, role) {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("Missing JWT_SECRET");
   const key = new TextEncoder().encode(secret);
-  const safeRole = String(role || "user").toLowerCase() === "admin" ? "admin" : "user";
+  const safeRole = ["admin", "agent", "user"].includes(String(role || "user").toLowerCase()) ? String(role || "user").toLowerCase() : "user";
   return new SignJWT({ userId: String(userId), role: safeRole })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

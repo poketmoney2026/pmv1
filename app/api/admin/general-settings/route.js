@@ -15,12 +15,28 @@ function validateNonNegative(name, value) {
   return value;
 }
 
+function toBool(value, fallback = true) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(v)) return true;
+    if (["false", "0", "no", "n"].includes(v)) return false;
+  }
+  return fallback;
+}
+
 function shape(doc) {
   return {
     minDeposit: doc?.minDeposit ?? null,
     maxDeposit: doc?.maxDeposit ?? null,
+    depositTimerHours: doc?.depositTimerHours ?? 1,
+    allowMultipleDeposits: doc?.allowMultipleDeposits !== false,
+    agentMinDepositBkash: doc?.agentMinDepositBkash ?? null,
+    agentMinDepositNagad: doc?.agentMinDepositNagad ?? null,
+    agentCommissionPercent: doc?.agentCommissionPercent ?? 0,
     minWithdraw: doc?.minWithdraw ?? null,
     maxWithdraw: doc?.maxWithdraw ?? null,
+    withdrawTimerHours: doc?.withdrawTimerHours ?? 1,
     rechargeMinWithdraw: doc?.rechargeMinWithdraw ?? 20,
     rechargeMaxWithdraw: doc?.rechargeMaxWithdraw ?? null,
     withdrawFee: doc?.withdrawFee ?? null,
@@ -57,8 +73,14 @@ export async function PUT(req) {
     const payload = {
       minDeposit: validateNonNegative("minDeposit", toNumOrNull(body.minDeposit)),
       maxDeposit: validateNonNegative("maxDeposit", toNumOrNull(body.maxDeposit)),
+      depositTimerHours: validateNonNegative("depositTimerHours", toNumOrNull(body.depositTimerHours)),
+      allowMultipleDeposits: toBool(body.allowMultipleDeposits, true),
+      agentMinDepositBkash: validateNonNegative("agentMinDepositBkash", toNumOrNull(body.agentMinDepositBkash)),
+      agentMinDepositNagad: validateNonNegative("agentMinDepositNagad", toNumOrNull(body.agentMinDepositNagad)),
+      agentCommissionPercent: validateNonNegative("agentCommissionPercent", toNumOrNull(body.agentCommissionPercent)),
       minWithdraw: validateNonNegative("minWithdraw", toNumOrNull(body.minWithdraw)),
       maxWithdraw: validateNonNegative("maxWithdraw", toNumOrNull(body.maxWithdraw)),
+      withdrawTimerHours: validateNonNegative("withdrawTimerHours", toNumOrNull(body.withdrawTimerHours)),
       rechargeMinWithdraw: validateNonNegative("rechargeMinWithdraw", toNumOrNull(body.rechargeMinWithdraw)),
       rechargeMaxWithdraw: validateNonNegative("rechargeMaxWithdraw", toNumOrNull(body.rechargeMaxWithdraw)),
       withdrawFee: validateNonNegative("withdrawFee", toNumOrNull(body.withdrawFee)),
@@ -76,8 +98,15 @@ export async function PUT(req) {
       rank4to10Prize: validateNonNegative("rank4to10Prize", toNumOrNull(body.rank4to10Prize)),
       rank11to50Prize: validateNonNegative("rank11to50Prize", toNumOrNull(body.rank11to50Prize)),
     };
+
     if (payload.minDeposit !== null && payload.maxDeposit !== null && payload.minDeposit > payload.maxDeposit) {
       return NextResponse.json({ ok: false, message: "minDeposit cannot be greater than maxDeposit" }, { status: 400 });
+    }
+    if (payload.depositTimerHours !== null && payload.depositTimerHours < 0) {
+      return NextResponse.json({ ok: false, message: "depositTimerHours cannot be negative" }, { status: 400 });
+    }
+    if (payload.withdrawTimerHours !== null && payload.withdrawTimerHours < 0) {
+      return NextResponse.json({ ok: false, message: "withdrawTimerHours cannot be negative" }, { status: 400 });
     }
     if (payload.minWithdraw !== null && payload.maxWithdraw !== null && payload.minWithdraw > payload.maxWithdraw) {
       return NextResponse.json({ ok: false, message: "minWithdraw cannot be greater than maxWithdraw" }, { status: 400 });
@@ -91,11 +120,13 @@ export async function PUT(req) {
     if (payload.noticeIntervalMin !== null && payload.noticeIntervalMin < 1) {
       return NextResponse.json({ ok: false, message: "noticeIntervalMin must be at least 1" }, { status: 400 });
     }
+
     const updated = await GeneralSettings.findOneAndUpdate(
       { key: "global" },
       { $setOnInsert: { key: "global" }, $set: payload },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean();
+
     return NextResponse.json({ ok: true, message: "Settings saved", data: shape(updated) }, { status: 200 });
   } catch (e) {
     return NextResponse.json({ ok: false, message: e?.message || "Invalid data" }, { status: 400 });

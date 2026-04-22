@@ -82,6 +82,7 @@ export async function POST(req) {
   const maxWithdraw = paymentMethod === "recharge" ? (s?.rechargeMaxWithdraw == null ? null : clamp0(s.rechargeMaxWithdraw)) : (s?.maxWithdraw == null ? null : clamp0(s.maxWithdraw));
   const dailyWithdrawLimit = s?.dailyWithdrawLimit == null ? null : Math.floor(clamp0(s.dailyWithdrawLimit));
   const dailyAmountLimit = s?.dailyAmountLimit == null ? null : round2(clamp0(s.dailyAmountLimit));
+  const withdrawTimerHours = Math.max(0, Number(s?.withdrawTimerHours ?? 1));
 
   if (minWithdraw && amount < minWithdraw) return NextResponse.json({ ok: false, message: "Min withdraw" }, { status: 400 });
   if (maxWithdraw !== null && amount > maxWithdraw) return NextResponse.json({ ok: false, message: "Max withdraw" }, { status: 400 });
@@ -92,6 +93,7 @@ export async function POST(req) {
   if (totalDebit > balance) return NextResponse.json({ ok: false, message: `You need Tk ${totalDebit.toFixed(2)} balance` }, { status: 400 });
 
   const now = new Date();
+  const processingExpiresAt = withdrawTimerHours > 0 ? new Date(now.getTime() + withdrawTimerHours * 60 * 60 * 1000) : null;
   const usage = await getLast24hUsage(user._id, now);
   if (dailyWithdrawLimit !== null && usage.usedCount + 1 > dailyWithdrawLimit) {
     return NextResponse.json({ ok: false, code: "LIMIT_COUNT_24H", message: "24 hours withdraw limit exceeded", data: { ...usage, dailyWithdrawLimit, dailyAmountLimit, usedAmount: usage.usedAmount, usedCount: usage.usedCount } }, { status: 429 });
@@ -117,6 +119,7 @@ export async function POST(req) {
       paymentProof: "",
       status: "pending",
       date: now,
+      processingExpiresAt,
     }], { session });
 
     const tx = await Transaction.create([{
@@ -126,6 +129,7 @@ export async function POST(req) {
       amount,
       note: `Withdrawal request submitted: Tk${amount}.`,
       date: now,
+      processingExpiresAt,
     }], { session });
 
     user.balance = round2(balance - totalDebit);

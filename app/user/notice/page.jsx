@@ -14,7 +14,7 @@ function usePM() {
 export default function UserNoticePage() {
   const pm = usePM();
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState({ title: "NOTICE", body: "", isActive: false });
+  const [notice, setNotice] = useState({ title: "NOTICE", body: "", isActive: false, type: "modal", intervalMin: 30, maxShows: 0, targetMobile: "" });
 
   useEffect(() => {
     let live = true;
@@ -48,6 +48,7 @@ export default function UserNoticePage() {
           {loading ? <div className="text-sm">Loading...</div> : notice.isActive ? (
             <>
               <div className="text-[12px] font-black tracking-[0.25em] uppercase">{notice.title || "NOTICE"}</div>
+              <div className="mt-2 text-[10px] uppercase tracking-[0.24em]" style={{ color: pm.fg70 }}>{notice.type === "news" ? "News" : "Modal"} • Every {notice.intervalMin || 30} min</div>
               <div className="mt-3 whitespace-pre-wrap text-sm leading-6" style={{ color: pm.fg }}>{notice.body || "No notice text."}</div>
             </>
           ) : <div className="text-sm" style={{ color: pm.fg70 }}>No active notice right now.</div>}

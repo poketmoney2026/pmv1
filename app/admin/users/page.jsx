@@ -22,6 +22,8 @@ function usePM() {
       greenBd: "color-mix(in srgb, #22c55e 42%, transparent)",
       redBg: "color-mix(in srgb, #ef4444 16%, transparent)",
       redBd: "color-mix(in srgb, #ef4444 42%, transparent)",
+      yellowBg: "color-mix(in srgb, #eab308 16%, transparent)",
+      yellowBd: "color-mix(in srgb, #eab308 42%, transparent)",
     }),
     []
   );
@@ -113,6 +115,7 @@ export default function AdminUserManagementPage() {
     { value: "", label: "All roles" },
     { value: "user", label: "User" },
     { value: "admin", label: "Admin" },
+    { value: "agent", label: "Agent" },
   ], []);
 
   const statusOptions = useMemo(() => [
@@ -279,8 +282,8 @@ export default function AdminUserManagementPage() {
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
                       <button type="button" onClick={() => changeStatus(String(u._id), "active")} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.greenBd, background: pm.greenBg, color: pm.fg }}>MAKE ACTIVE</button>
-                      <button type="button" onClick={() => setInactiveModal({ open: true, userId: String(u._id), reason: INACTIVE_REASONS[0] })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.redBd, background: pm.redBg, color: pm.fg }}>MAKE INACTIVE</button>
-                      <button type="button" onClick={() => setDeleteModal({ open: true, userId: String(u._id) })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.b28, background: pm.bg08, color: pm.fg }}>DELETE</button>
+                      <button type="button" onClick={() => setInactiveModal({ open: true, userId: String(u._id), reason: INACTIVE_REASONS[0] })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.yellowBd, background: pm.yellowBg, color: pm.fg }}>MAKE INACTIVE</button>
+                      <button type="button" onClick={() => setDeleteModal({ open: true, userId: String(u._id) })} className="border px-2.5 py-2 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.redBd, background: pm.redBg, color: pm.fg }}>DELETE</button>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <div className="border px-2.5 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: pm.fg70 }}>Balance</div><div className="mt-1 text-[12px] font-black tabular-nums">{fmt2(u.balance || 0)}</div></div>

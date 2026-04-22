@@ -1,10 +1,11 @@
-// app/(user)/deposit/page.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { Funnel_Display } from "next/font/google";
-import { FiCopy, FiX, FiCheckCircle, FiLayers, FiFileText } from "react-icons/fi";
+import { FiCopy, FiX, FiCheckCircle, FiLayers, FiFileText, FiClock, FiAlertTriangle } from "react-icons/fi";
+import { OdometerStyles, OdometerText, useAnimatedCountdown } from "@/components/OdometerText";
 
 const funnelDisplay = Funnel_Display({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -52,6 +53,7 @@ function formatDateTime(d) {
   return `${date} • ${time}`;
 }
 
+
 function Block({ title, children }) {
   return (
     <div
@@ -73,11 +75,11 @@ function Block({ title, children }) {
   );
 }
 
-function Modal({ open, onClose, title, children }) {
+function Modal({ open, onClose, title, children, closable = true }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[80]">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/70" onClick={closable ? onClose : undefined} aria-hidden="true" />
       <div className="absolute left-1/2 top-1/2 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2">
         <div
           className="relative border shadow-2xl"
@@ -104,19 +106,21 @@ function Modal({ open, onClose, title, children }) {
             <div className="min-w-0">
               <div className="text-[12px] font-black tracking-widest uppercase truncate">{title}</div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="border p-2 active:scale-[0.99]"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                color: "var(--pm-fg)",
-              }}
-              aria-label="Close"
-            >
-              <FiX className="h-4 w-4" />
-            </button>
+            {closable ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="border p-2 active:scale-[0.99]"
+                style={{
+                  borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
+                  background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
+                  color: "var(--pm-fg)",
+                }}
+                aria-label="Close"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            ) : null}
           </div>
           <div className="relative p-4" style={{ color: "var(--pm-fg)" }}>
             {children}
@@ -138,10 +142,7 @@ function CopyLine({ label, value, copyValue }) {
       }}
     >
       <div className="min-w-0">
-        <div
-          className="text-[10px] font-bold tracking-widest uppercase"
-          style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}
-        >
+        <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
           {label}
         </div>
         <div className="mt-1 text-[12px] font-black truncate tabular-nums" style={{ color: "var(--pm-fg)" }}>
@@ -248,10 +249,7 @@ function KV({ label, value }) {
         color: "var(--pm-fg)",
       }}
     >
-      <div
-        className="text-[10px] font-bold tracking-widest uppercase"
-        style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}
-      >
+      <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
         {label}
       </div>
       <div className="text-[11px] font-black tabular-nums truncate max-w-[62%] text-right" style={{ color: "var(--pm-fg)" }}>
@@ -261,13 +259,38 @@ function KV({ label, value }) {
   );
 }
 
+function CountdownBadge({ target, compact = false }) {
+  const { value, pulse, totalMs } = useAnimatedCountdown(target);
+  return (
+    <div
+      className={["relative overflow-hidden border", compact ? "px-3 py-2" : "px-3 py-2.5"].join(" ")}
+      style={{
+        borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
+        background: totalMs > 0 ? "color-mix(in srgb, var(--pm-fg) 12%, transparent)" : "color-mix(in srgb, var(--pm-fg) 7%, transparent)",
+        color: "var(--pm-fg)",
+      }}
+    >
+      <div className="absolute inset-y-0 left-0 w-20" style={{ background: "linear-gradient(90deg, color-mix(in srgb, var(--pm-fg) 8%, transparent), transparent)" }} />
+      <div className="relative flex items-center justify-between gap-3">
+        <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 72%, transparent)" }}>
+          TIMER
+        </div>
+        <div className="flex items-center gap-2 text-[15px] font-black tracking-[0.10em] tabular-nums leading-none">
+          <FiClock className="h-4 w-4 shrink-0" />
+          <OdometerText value={value} pulse={pulse} durationBase={460} durationSpread={180} flashMs={520} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DepositHistoryCard({ row, onOpenShot }) {
   const statusCls = statusPillClass(row.status);
   const isColored = !!statusCls;
-
   const via = String(row.verifyVia || "").toLowerCase();
   const shot = String(row.screenshotUrl || "").trim();
   const showShot = via === "screenshot" && !!shot;
+  const showTimer = String(row.status || "").toLowerCase() === "processing" && !!row.processingExpiresAt;
 
   return (
     <div
@@ -315,6 +338,7 @@ function DepositHistoryCard({ row, onOpenShot }) {
         <KV label="METHOD" value={row.method || "—"} />
         <KV label="AMOUNT" value={fmtBDT0(row.amount)} />
         <KV label="VERIFY VIA" value={row.verifyVia || "—"} />
+        {showTimer ? <CountdownBadge target={row.processingExpiresAt} /> : null}
       </div>
 
       {showShot ? (
@@ -328,20 +352,11 @@ function DepositHistoryCard({ row, onOpenShot }) {
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="h-14 w-14 overflow-hidden border"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--pm-fg) 25%, transparent)",
-                  background: "color-mix(in srgb, var(--pm-fg) 8%, transparent)",
-                }}
-              >
+              <div className="h-14 w-14 overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 25%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 8%, transparent)" }}>
                 <img src={shot} alt="preview" className="h-full w-full object-cover" loading="lazy" />
               </div>
               <div className="min-w-0">
-                <div
-                  className="text-[10px] font-bold tracking-widest uppercase"
-                  style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}
-                >
+                <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
                   REVIEW
                 </div>
                 <div className="mt-1 text-[11px] font-black truncate" style={{ color: "var(--pm-fg)" }}>
@@ -370,6 +385,9 @@ function DepositHistoryCard({ row, onOpenShot }) {
 }
 
 export default function Deposit() {
+  const pathname = usePathname();
+  const isAgentPanel = String(pathname || "").startsWith("/agent");
+  const panelTitle = isAgentPanel ? "AGENT DEPOSIT" : "DEPOSIT";
   const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
@@ -433,9 +451,19 @@ export default function Deposit() {
 
   const [openPay, setOpenPay] = useState(false);
   const [openVerify, setOpenVerify] = useState(false);
+  const [processingBlockOpen, setProcessingBlockOpen] = useState(false);
+  const [limitModalOpen, setLimitModalOpen] = useState(false);
+  const [limitModalText, setLimitModalText] = useState("");
+
+  const openAgentLimitModal = (minimumAmount) => {
+    const minValue = Number(minimumAmount || 0);
+    setLimitModalText(`এই মেথডে ডিপোজিট করতে সর্বনিম্ন ${fmtBDT0(minValue)} প্রয়োজন। অনুগ্রহ করে নির্ধারিত লিমিট বা তার বেশি এমাউন্ট দিন।`);
+    setLimitModalOpen(true);
+  };
 
   const [historyLoading, setHistoryLoading] = useState(true);
   const [history, setHistory] = useState([]);
+  const [depositRules, setDepositRules] = useState({ allowMultipleDeposits: true, depositTimerHours: 1, minDeposit: 0, agentMinDepositBkash: 0, agentMinDepositNagad: 0, role: "user" });
 
   const loadHistory = async () => {
     setHistoryLoading(true);
@@ -449,6 +477,14 @@ export default function Deposit() {
       }
       const items = j?.data?.items || [];
       setHistory(Array.isArray(items) ? items : []);
+      setDepositRules({
+        allowMultipleDeposits: j?.data?.settings?.allowMultipleDeposits !== false,
+        depositTimerHours: Number(j?.data?.settings?.depositTimerHours ?? 1),
+        minDeposit: Number(j?.data?.settings?.minDeposit ?? 0),
+        agentMinDepositBkash: Number(j?.data?.settings?.agentMinDepositBkash ?? 0),
+        agentMinDepositNagad: Number(j?.data?.settings?.agentMinDepositNagad ?? 0),
+        role: String(j?.data?.settings?.role || "user").toLowerCase(),
+      });
     } catch {
       toast.error("Network error while loading history");
       setHistory([]);
@@ -461,12 +497,34 @@ export default function Deposit() {
     loadHistory();
   }, []);
 
+  const latestProcessingDeposit = useMemo(
+    () => history.find((item) => String(item?.status || "").toLowerCase() === "processing") || null,
+    [history]
+  );
+  const minAmountForMethod = useMemo(() => {
+    if (isAgentPanel || depositRules.role === "agent") {
+      return Number(method === "nagad" ? depositRules.agentMinDepositNagad : depositRules.agentMinDepositBkash) || 0;
+    }
+    return Number(depositRules.minDeposit || 0) || 0;
+  }, [depositRules, isAgentPanel, method]);
+
   const openPayment = () => {
     const a = Number(amountNum);
     if (!Number.isFinite(a) || a <= 0) return toast.error("Enter a valid amount");
+    if (minAmountForMethod > 0 && a < minAmountForMethod) {
+      if (isAgentPanel || depositRules.role === "agent") {
+        openAgentLimitModal(minAmountForMethod);
+        return;
+      }
+      return toast.error(`Minimum ${methodTitle} deposit is Tk ${minAmountForMethod}`);
+    }
     if (metaLoading) return toast.error("Please wait...");
     const current = method === "bkash" ? pay.bkash || "" : pay.nagad || "";
     if (!String(current || "").trim()) return toast.error(`${methodTitle} number not set`);
+    if (!depositRules.allowMultipleDeposits && latestProcessingDeposit) {
+      setProcessingBlockOpen(true);
+      return;
+    }
     setOpenPay(true);
   };
 
@@ -488,8 +546,7 @@ export default function Deposit() {
   const canVerifyTrx = String(trxId || "").trim().length >= 6;
   const canVerifyShot = !!shotUrl && !shotUploading;
 
-  const canVerify =
-    !verifyBusy && !shotUploading && (verifyMode === "number" ? canVerifyNumber : verifyMode === "trx" ? canVerifyTrx : canVerifyShot);
+  const canVerify = !verifyBusy && !shotUploading && (verifyMode === "number" ? canVerifyNumber : verifyMode === "trx" ? canVerifyTrx : canVerifyShot);
 
   const resetVerifyModal = () => {
     setSenderNumber("");
@@ -506,6 +563,13 @@ export default function Deposit() {
     if (!canVerify) return;
     const a = Number(amountNum);
     if (!Number.isFinite(a) || a <= 0) return toast.error("Enter a valid amount");
+    if (minAmountForMethod > 0 && a < minAmountForMethod) {
+      if (isAgentPanel || depositRules.role === "agent") {
+        openAgentLimitModal(minAmountForMethod);
+        return;
+      }
+      return toast.error(`Minimum ${methodTitle} deposit is Tk ${minAmountForMethod}`);
+    }
 
     setVerifyBusy(true);
     toast.loading("Submitting...", { id: "vfy" });
@@ -530,8 +594,10 @@ export default function Deposit() {
 
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (j?.code === "PROCESSING_DEPOSIT_EXISTS") setProcessingBlockOpen(true);
         toast.error(j?.message || "Submit failed", { id: "vfy" });
         setVerifyBusy(false);
+        if (j?.data?.item) setHistory((prev) => [j.data.item, ...prev]);
         return;
       }
 
@@ -559,8 +625,9 @@ export default function Deposit() {
 
   return (
     <div className={`${funnelDisplay.className} min-h-screen px-4 py-6 pt-16 md:pt-6`} style={{ background: "var(--pm-bg-grad)", color: "var(--pm-fg)" }}>
+      <OdometerStyles />
       <div className="mx-auto w-full max-w-md space-y-3">
-        <Block title="DEPOSIT">
+        <Block title={panelTitle}>
           <div className="text-[12px] font-black" style={{ color: "var(--pm-fg)" }}>
             How much do you want to deposit?
           </div>
@@ -623,7 +690,30 @@ export default function Deposit() {
               <div className="mt-2 text-[10px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
                 {metaLoading ? "Loading payment numbers..." : paymentNumber ? `${methodTitle} ready` : `${methodTitle} not set`}
               </div>
+
+              <div className="mt-2 text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 82%, transparent)" }}>
+                Minimum {methodTitle}: <span className="font-black" style={{ color: "var(--pm-fg)" }}>{minAmountForMethod > 0 ? fmtBDT0(minAmountForMethod) : "No minimum"}</span>
+              </div>
             </div>
+
+            {!depositRules.allowMultipleDeposits && latestProcessingDeposit ? (
+              <div
+                className="border px-3 py-3 text-[11px]"
+                style={{
+                  borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
+                  background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
+                  color: "color-mix(in srgb, var(--pm-fg) 88%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-2 font-black tracking-widest uppercase">
+                  <FiAlertTriangle className="h-4 w-4" />
+                  Processing deposit found
+                </div>
+                <div className="mt-2 text-[12px]">
+                  প্রসেসিং সম্পন্ন হলে আপনি আবার নতুন ডিপোজিট তৈরি করতে পারবেন।
+                </div>
+              </div>
+            ) : null}
 
             <button
               type="button"
@@ -640,39 +730,74 @@ export default function Deposit() {
           </div>
         </Block>
 
+        <Modal open={limitModalOpen} onClose={() => setLimitModalOpen(false)} title="মিনিমাম ডিপোজিট লিমিট" closable>
+          <div className="space-y-3">
+            <div
+              className="border px-3 py-3 text-[12px] leading-6"
+              style={{
+                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
+                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
+                color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)",
+              }}
+            >
+              {limitModalText || "এই মেথডে ডিপোজিট করার জন্য নির্ধারিত সর্বনিম্ন লিমিট পূরণ করতে হবে।"}
+            </div>
+            <button
+              type="button"
+              onClick={() => setLimitModalOpen(false)}
+              className="w-full border py-3 text-sm font-black tracking-widest uppercase active:scale-[0.99]"
+              style={{
+                borderColor: "color-mix(in srgb, var(--pm-fg) 35%, transparent)",
+                background: "color-mix(in srgb, var(--pm-fg) 12%, transparent)",
+                color: "var(--pm-fg)",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </Modal>
+
+        <Modal open={processingBlockOpen} onClose={() => setProcessingBlockOpen(false)} title="ডিপোজিট প্রসেসিং" closable>
+          <div className="space-y-3">
+            <div
+              className="border px-3 py-3 text-[12px] leading-6"
+              style={{
+                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
+                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
+                color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)",
+              }}
+            >
+              আপনার একটি ডিপোজিট বর্তমানে প্রসেসিং অবস্থায় আছে। প্রসেসিং সফল হয়ে গেলে আপনি আবার নতুন করে ডিপোজিট তৈরি করতে পারবেন।
+            </div>
+            {latestProcessingDeposit?.processingExpiresAt ? <CountdownBadge target={latestProcessingDeposit.processingExpiresAt} /> : null}
+            <button
+              type="button"
+              onClick={() => setProcessingBlockOpen(false)}
+              className="w-full border py-3 text-sm font-black tracking-widest uppercase active:scale-[0.99]"
+              style={{
+                borderColor: "color-mix(in srgb, var(--pm-fg) 35%, transparent)",
+                background: "color-mix(in srgb, var(--pm-fg) 12%, transparent)",
+                color: "var(--pm-fg)",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </Modal>
+
         <Modal open={openPay} onClose={() => setOpenPay(false)} title={`${methodTitle} PAYMENT`}>
           <div className="space-y-3">
             <CopyLine label={`${methodTitle} NUMBER`} value={paymentNumber || "01XXXXXXXXX"} copyValue={onlyDigits(paymentNumber)} />
             <CopyLine label="AMOUNT" value={fmtBDT0(amountNum || 0)} />
 
-            <div
-              className="border px-3 py-3 text-[11px]"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)",
-              }}
-            >
+            <div className="border px-3 py-3 text-[11px]" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)" }}>
               <div className="font-black tracking-widest uppercase">WARNING</div>
-              <div className="mt-1 opacity-95">
-                • You must use <span className="font-black">CASH IN</span> or <span className="font-black">SEND MONEY</span>
-              </div>
-              <div className="mt-1 opacity-95">
-                • Do not use <span className="font-black">CASH OUT</span> or <span className="font-black">RECHARGE</span>
-              </div>
-              <div className="mt-1 opacity-95">
-                • Send exactly <span className="font-black">{fmtBDT0(amountNum || 0)}</span> — <span className="font-black">no more, no less</span>
-              </div>
+              <div className="mt-1 opacity-95">• You must use <span className="font-black">CASH IN</span> or <span className="font-black">SEND MONEY</span></div>
+              <div className="mt-1 opacity-95">• Do not use <span className="font-black">CASH OUT</span> or <span className="font-black">RECHARGE</span></div>
+              <div className="mt-1 opacity-95">• Send exactly <span className="font-black">{fmtBDT0(amountNum || 0)}</span> — <span className="font-black">no more, no less</span></div>
             </div>
 
-            <div
-              className="border px-3 py-3 text-[11px]"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)",
-              }}
-            >
+            <div className="border px-3 py-3 text-[11px]" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)" }}>
               <div className="inline-flex items-center gap-2 font-black tracking-widest uppercase">
                 <FiCheckCircle className="h-4 w-4" /> NOTE
               </div>
@@ -689,34 +814,16 @@ export default function Deposit() {
                 setOpenVerify(true);
               }}
               className="w-full border py-3 text-sm font-black tracking-widest uppercase active:scale-[0.99]"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 35%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 12%, transparent)",
-                color: "var(--pm-fg)",
-              }}
+              style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 35%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 12%, transparent)", color: "var(--pm-fg)" }}
             >
               VERIFY NOW
             </button>
           </div>
         </Modal>
 
-        <Modal
-          open={openVerify}
-          onClose={() => {
-            setOpenVerify(false);
-            resetVerifyModal();
-          }}
-          title="DEPOSIT VERIFICATION"
-        >
+        <Modal open={openVerify} onClose={() => { setOpenVerify(false); resetVerifyModal(); }} title="DEPOSIT VERIFICATION">
           <div className="space-y-3">
-            <div
-              className="border px-3 py-3 text-[11px]"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)",
-              }}
-            >
+            <div className="border px-3 py-3 text-[11px]" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 92%, transparent)" }}>
               <div className="font-black tracking-widest uppercase">How do you want to verify?</div>
               <div className="mt-2 grid grid-cols-1 gap-2">
                 <VerifyOption id="number" label="MOBILE NUMBER" active={verifyMode === "number"} onClick={setVerifyMode} />
@@ -727,9 +834,7 @@ export default function Deposit() {
 
             {verifyMode === "number" ? (
               <div className="space-y-2">
-                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>
-                  Enter the number you sent from
-                </div>
+                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>Enter the number you sent from</div>
                 <input
                   type="tel"
                   inputMode="numeric"
@@ -742,15 +847,11 @@ export default function Deposit() {
                   onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
                   onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
                 />
-                <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
-                  {senderDigits.length}/11
-                </div>
+                <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>{senderDigits.length}/11</div>
               </div>
             ) : verifyMode === "trx" ? (
               <div className="space-y-2">
-                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>
-                  Enter your Transaction ID
-                </div>
+                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>Enter your Transaction ID</div>
                 <input
                   type="text"
                   placeholder="e.g. A1B2C3D4"
@@ -761,24 +862,13 @@ export default function Deposit() {
                   onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
                   onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
                 />
-                <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
-                  Min 6 chars
-                </div>
+                <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>Min 6 chars</div>
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>
-                  Upload your payment screenshot
-                </div>
+                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--pm-fg) 85%, transparent)" }}>Upload your payment screenshot</div>
 
-                <label
-                  className="block border px-4 py-4 cursor-pointer"
-                  style={{
-                    borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                    background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                    color: "var(--pm-fg)",
-                  }}
-                >
+                <label className="block border px-4 py-4 cursor-pointer" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "var(--pm-fg)" }}>
                   <input
                     type="file"
                     accept="image/*"
@@ -790,9 +880,7 @@ export default function Deposit() {
                       if (shotPreview) URL.revokeObjectURL(shotPreview);
                       setShotPreview("");
                       if (!f) return;
-                      try {
-                        setShotPreview(URL.createObjectURL(f));
-                      } catch {}
+                      try { setShotPreview(URL.createObjectURL(f)); } catch {}
                       setShotUploading(true);
                       toast.loading("Uploading screenshot...", { id: "upshot" });
                       try {
@@ -818,13 +906,7 @@ export default function Deposit() {
 
                 {shotPreview ? (
                   <div className="mt-3 flex items-center gap-3">
-                    <div
-                      className="h-16 w-16 overflow-hidden border"
-                      style={{
-                        borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                        background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                      }}
-                    >
+                    <div className="h-16 w-16 overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)" }}>
                       <img src={shotPreview} alt="preview" className="h-full w-full object-cover" />
                     </div>
                     <div className="min-w-0">
@@ -857,28 +939,9 @@ export default function Deposit() {
           </div>
         </Modal>
 
-        <Modal
-          open={historyShotOpen}
-          onClose={() => {
-            setHistoryShotOpen(false);
-            setHistoryShotUrl("");
-          }}
-          title="SCREENSHOT"
-        >
-          <div
-            className="border p-2"
-            style={{
-              borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-              background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-            }}
-          >
-            <div
-              className="w-full overflow-hidden border"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 8%, transparent)",
-              }}
-            >
+        <Modal open={historyShotOpen} onClose={() => { setHistoryShotOpen(false); setHistoryShotUrl(""); }} title="SCREENSHOT">
+          <div className="border p-2" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)" }}>
+            <div className="w-full overflow-hidden border" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 8%, transparent)" }}>
               <div className="max-h-[70vh] w-full">
                 <img src={historyShotUrl} alt="Full screenshot" className="h-full w-full object-contain" />
               </div>
@@ -891,47 +954,20 @@ export default function Deposit() {
             <div className="inline-flex items-center gap-2 text-[11px] font-black tracking-widest uppercase" style={{ color: "var(--pm-fg)" }}>
               <FiLayers className="h-4 w-4" /> RECORDS
             </div>
-            <span
-              className="inline-flex items-center gap-2 border px-3 py-1 text-[11px] font-black tracking-widest uppercase"
-              style={{
-                borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)",
-              }}
-            >
+            <span className="inline-flex items-center gap-2 border px-3 py-1 text-[11px] font-black tracking-widest uppercase" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)" }}>
               {history.length} ITEMS
             </span>
           </div>
 
           <div className="mt-3 space-y-2">
             {historyLoading ? (
-              <div
-                className="border px-3 py-3 text-[11px]"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                  background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                  color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)",
-                }}
-              >
+              <div className="border px-3 py-3 text-[11px]" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
                 Loading history…
               </div>
             ) : history.length ? (
-              history.map((row) => (
-                <DepositHistoryCard
-                  key={row._id || row.id}
-                  row={row}
-                  onOpenShot={openHistoryShot}
-                />
-              ))
+              history.map((row) => <DepositHistoryCard key={row._id || row.id} row={row} onOpenShot={openHistoryShot} />)
             ) : (
-              <div
-                className="border px-3 py-3 text-[11px]"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-                  background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-                  color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)",
-                }}
-              >
+              <div className="border px-3 py-3 text-[11px]" style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 70%, transparent)" }}>
                 No deposits yet.
               </div>
             )}
@@ -941,11 +977,7 @@ export default function Deposit() {
             type="button"
             onClick={loadHistory}
             className="mt-3 w-full border py-3 text-[11px] font-black tracking-widest uppercase active:scale-[0.99]"
-            style={{
-              borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)",
-              background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
-              color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)",
-            }}
+            style={{ borderColor: "color-mix(in srgb, var(--pm-fg) 30%, transparent)", background: "color-mix(in srgb, var(--pm-fg) 10%, transparent)", color: "color-mix(in srgb, var(--pm-fg) 90%, transparent)" }}
           >
             REFRESH HISTORY
           </button>

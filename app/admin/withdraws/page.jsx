@@ -841,42 +841,14 @@ export default function AdminWithdrawsPage() {
                   </div>
 
                   <div className="mt-3 space-y-1.5">
-                    <KV
-                      pm={pm}
-                      label="MOBILE"
-                      value={w.mobile || "—"}
-                      rightSlot={
-                        w.mobile ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await copyText(w.mobile);
-                                  toast.success("Copied");
-                                } catch {
-                                  toast.error("Copy failed");
-                                }
-                              }}
-                              className="shrink-0 inline-flex items-center justify-center gap-1 border px-2 py-1 text-[10px] font-black tracking-widest uppercase active:scale-[0.99] min-w-[70px]"
-                              style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}
-                              aria-label="Copy mobile"
-                              title="Copy mobile"
-                            >
-                              <Copy className="h-3.5 w-3.5" /> COPY
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openEditMobile(w)}
-                              className="shrink-0 inline-flex items-center justify-center gap-1 border px-2 py-1 text-[10px] font-black tracking-widest uppercase active:scale-[0.99] min-w-[70px]"
-                              style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}
-                            >
-                              <Pencil className="h-3.5 w-3.5" /> EDIT
-                            </button>
-                          </>
-                        ) : null
-                      }
-                    />
+                    <KV pm={pm} label="OPTIONS" value={""} rightSlot={w.mobile ? (
+                      <div className="flex items-center gap-1.5">
+                        <button type="button" onClick={async () => { try { await copyText(w.mobile); toast.success("Copied"); } catch { toast.error("Copy failed"); } }} className="shrink-0 border px-2 py-1 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>COPY N</button>
+                        <button type="button" onClick={async () => { try { await copyText(String(w.amount || "")); toast.success("Copied"); } catch { toast.error("Copy failed"); } }} className="shrink-0 border px-2 py-1 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>COPY A</button>
+                        <button type="button" onClick={() => openEditMobile(w)} className="shrink-0 border px-2 py-1 text-[10px] font-black tracking-widest uppercase active:scale-[0.99]" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>EDIT</button>
+                      </div>
+                    ) : null} />
+                    <KV pm={pm} label="MOBILE" value={w.mobile || "—"} />
                     <KV pm={pm} label="TIME" value={formatDateTime(w.createdAt)} />
                     <KV pm={pm} label="METHOD" value={methodLabel(w.paymentMethod)} />
                     <KV pm={pm} label="TYPE" value={typeLabel(w.accountType)} />

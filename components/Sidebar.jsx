@@ -27,6 +27,11 @@ import {
   Users2,
   Bell,
   MessageCircle,
+  Wrench,
+  Files,
+  Activity,
+  HelpCircle,
+  Palette,
 } from "lucide-react";
 import { Calculator } from "lucide-react";
 import { FiCreditCard, FiLayers } from "react-icons/fi";
@@ -40,7 +45,8 @@ const USER_MENU = [
   { name: "Balance Claim", href: "/user/plan-and-balance-claim", icon: FiLayers },
   { name: "Leaderboard", href: "/user/leaderboard", icon: Trophy },
   { name: "Referral", href: "/user/referral", icon: Users2 },
-  { name: "Support", href: "/user/contact", icon: LifeBuoy },
+  { name: "Contact", href: "/user/contact", icon: LifeBuoy },
+  { name: "Help", href: "/user/help", icon: HelpCircle },
   { name: "Withdraw", href: "/user/withdraw", icon: ArrowDownToLine },
   { name: "Profile", href: "/user/profile", icon: User },
   { name: "Transactions", href: "/user/transactions", icon: Receipt },
@@ -60,9 +66,32 @@ const ADMIN_MENU = [
   { name: "Referral", href: "/admin/referral", icon: Users2 },
   { name: "Links", href: "/admin/links", icon: Link2 },
   { name: "General", href: "/admin/general", icon: Settings },
+  { name: "Theme", href: "/admin/theme", icon: Palette },
+  { name: "Transactions", href: "/admin/transactions", icon: Receipt },
+  { name: "Documents", href: "/admin/documents", icon: Files },
+  { name: "Download App", href: "/admin/download", icon: Download },
   { name: "Notice", href: "/admin/notice", icon: Bell },
   { name: "Live Chat", href: "/admin/live-chat", icon: MessageCircle },
+  { name: "Analytics", href: "/admin/analytics", icon: Activity },
+  { name: "Help", href: "/admin/help", icon: HelpCircle },
+  { name: "Update", href: "/admin/site-updating", icon: Wrench },
   { name: "Payment Methods", href: "/admin/payment-methods", icon: FiCreditCard },
+  { name: "Role", href: "/admin/roles", icon: Users2 },
+];
+
+
+const AGENT_MENU = [
+  { name: "Deposit Verify", href: "/agent/deposit-verify", icon: CheckCircle2 },
+  { name: "Deposit", href: "/agent/deposit", icon: Wallet },
+  { name: "Withdraw", href: "/agent/withdraw", icon: ArrowDownToLine },
+  { name: "Transactions", href: "/agent/transactions", icon: Receipt },
+  { name: "Profile", href: "/agent/profile", icon: User },
+  { name: "Referral", href: "/agent/referral", icon: Users2 },
+  { name: "Notice", href: "/agent/notice", icon: Bell },
+  { name: "Live Chat", href: "/agent/live-chat", icon: MessageCircle },
+  { name: "Help", href: "/agent/help", icon: HelpCircle },
+  { name: "Settings", href: "/agent/settings", icon: Settings },
+  { name: "Download App", href: "/agent/download", icon: Download },
 ];
 
 function fmt2(n) {
@@ -73,7 +102,8 @@ function fmt2(n) {
 function isActivePath(pathname, href) {
   if (!href) return false;
   if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`) || pathname.startsWith(href);
+  if (pathname === href) return true;
+  return pathname.startsWith(`${href}/`);
 }
 
 function BrandMark() {
@@ -92,8 +122,10 @@ function BrandMark() {
 export default function Sidebar({ role = "user" }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAdmin = String(role || "user").toLowerCase() === "admin";
-  const menu = useMemo(() => (isAdmin ? ADMIN_MENU : USER_MENU), [isAdmin]);
+  const roleKey = String(role || "user").toLowerCase();
+  const isAdmin = roleKey === "admin";
+  const isAgent = roleKey === "agent";
+  const menu = useMemo(() => (isAdmin ? ADMIN_MENU : isAgent ? AGENT_MENU : USER_MENU), [isAdmin, isAgent]);
 
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -140,9 +172,9 @@ export default function Sidebar({ role = "user" }) {
   };
 
   const Divider = ({ label }) => (
-    <div className="my-3">
-      <div className="h-px w-full" style={{ background: "color-mix(in srgb, var(--pm-fg) 18%, transparent)" }} />
-      <div className="mt-2 text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 65%, transparent)" }}>
+    <div className="my-3" suppressHydrationWarning>
+      <div suppressHydrationWarning className="h-px w-full" style={{ background: "color-mix(in srgb, var(--pm-fg) 18%, transparent)" }} />
+      <div suppressHydrationWarning className="mt-2 text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: "color-mix(in srgb, var(--pm-fg) 65%, transparent)" }}>
         {label}
       </div>
     </div>
@@ -181,10 +213,11 @@ export default function Sidebar({ role = "user" }) {
   return (
     <>
       <div
+        suppressHydrationWarning
         className={[funnelDisplay.className, "fixed left-0 right-0 top-0 z-50 h-14 select-none border-b px-3 md:hidden"].join(" ")}
         style={{ backgroundColor: "var(--pm-bg)", borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", color: "var(--pm-fg)" }}
       >
-        <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div suppressHydrationWarning className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-2">
           <div className="flex items-center justify-self-start">
             <button
               onClick={() => setOpen(true)}
@@ -221,6 +254,7 @@ export default function Sidebar({ role = "user" }) {
       {open ? <div className="fixed inset-0 z-[60] bg-black/70 md:hidden" onClick={() => setOpen(false)} /> : null}
 
       <aside
+        suppressHydrationWarning
         className={[funnelDisplay.className, "fixed left-0 top-0 z-[70] h-full w-[84%] max-w-[340px] select-none border-r shadow-2xl transition-transform duration-150 ease-out md:hidden", open ? "translate-x-0" : "-translate-x-full"].join(" ")}
         style={{ backgroundColor: "var(--pm-bg)", borderColor: "color-mix(in srgb, var(--pm-fg) 20%, transparent)", color: "var(--pm-fg)" }}
         aria-hidden={!open}
@@ -252,8 +286,8 @@ export default function Sidebar({ role = "user" }) {
             </div>
           </div>
 
-          <nav className="flex-1 space-y-2 overflow-y-auto p-4">
-            <Divider label={isAdmin ? "Admin Menu" : "User Menu"} />
+          <nav suppressHydrationWarning className="flex-1 space-y-2 overflow-y-auto p-4">
+            <Divider label={isAdmin ? "Admin Menu" : isAgent ? "Agent Menu" : "User Menu"} />
             {menu.map((item) => <MenuItem key={item.href} item={item} />)}
           </nav>
 
