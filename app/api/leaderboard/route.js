@@ -30,9 +30,11 @@ function prizeShape(settings) {
 
 async function buildLeaderboard({ uid, limit, offset }) {
   const start = getWindowStart();
-  const settings = await GeneralSettings.findOne({ key: "global" }).lean();
-  const cycle = await LeaderboardCycle.findOne({ key: "global" }).lean();
-  const agg = await Transaction.aggregate([
+  const [settings, cycle, totalUsers, agg] = await Promise.all([
+    GeneralSettings.findOne({ key: "global" }).lean(),
+    LeaderboardCycle.findOne({ key: "global" }).lean(),
+    User.countDocuments({ role: "user" }),
+    Transaction.aggregate([
     { $match: { type: "claim", status: "successful", createdAt: { $gte: start } } },
     { $group: { _id: "$user", claimTotal: { $sum: { $ifNull: ["$amount", 0] } } } },
     { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
@@ -40,6 +42,7 @@ async function buildLeaderboard({ uid, limit, offset }) {
     { $match: { "user.role": "user" } },
     { $project: { _id: 1, claimTotal: 1, fullName: "$user.fullName", mobile: "$user.mobile", status: "$user.status" } },
     { $sort: { claimTotal: -1, _id: 1 } },
+    ]),
   ]);
 
   const ranked = agg.map((row, index) => ({
@@ -58,7 +61,7 @@ async function buildLeaderboard({ uid, limit, offset }) {
   const prizeConfig = prizeShape(settings);
 
   return {
-    totalUsers: ranked.length,
+    totalUsers: Number(totalUsers || 0),
     myPosition,
     users: slice,
     hasMore: offset + slice.length < ranked.length,
