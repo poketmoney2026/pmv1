@@ -33,6 +33,7 @@ import {
   HelpCircle,
   Palette,
   Volume2,
+  BookOpen,
 } from "lucide-react";
 import { Calculator } from "lucide-react";
 import { FiCreditCard, FiLayers } from "react-icons/fi";
@@ -56,7 +57,8 @@ const USER_MENU = [
   { name: "Notice", href: "/user/notice", icon: Bell },
   { name: "Theme", href: "/user/theme", icon: Palette },
   { name: "Sound", href: "/user/sound", icon: Volume2 },
-  { name: "Help", href: "/user/help", icon: HelpCircle },
+  { name: "Tutorial", href: "/user/tutorial", icon: HelpCircle },
+  { name: "About", href: "/user/about", icon: BookOpen },
 ];
 
 const ADMIN_MENU = [
@@ -75,7 +77,7 @@ const ADMIN_MENU = [
   { name: "Notice", href: "/admin/notice", icon: Bell },
   { name: "Live Chat", href: "/admin/live-chat", icon: MessageCircle },
   { name: "Analytics", href: "/admin/analytics", icon: Activity },
-  { name: "Help", href: "/admin/help", icon: HelpCircle },
+  { name: "Tutorial", href: "/admin/tutorial", icon: HelpCircle },
   { name: "Update", href: "/admin/site-updating", icon: Wrench },
   { name: "Payment Methods", href: "/admin/payment-methods", icon: FiCreditCard },
   { name: "Role", href: "/admin/roles", icon: Users2 },
@@ -91,7 +93,7 @@ const AGENT_MENU = [
   { name: "Referral", href: "/agent/referral", icon: Users2 },
   { name: "Notice", href: "/agent/notice", icon: Bell },
   { name: "Live Chat", href: "/agent/live-chat", icon: MessageCircle },
-  { name: "Help", href: "/agent/help", icon: HelpCircle },
+  { name: "Tutorial", href: "/agent/tutorial", icon: HelpCircle },
   { name: "Theme", href: "/agent/theme", icon: Palette },
   { name: "Sound", href: "/agent/sound", icon: Volume2 },
   { name: "Download App", href: "/agent/download", icon: Download },
@@ -186,8 +188,12 @@ export default function Sidebar({ role = "user" }) {
   const MenuItem = ({ item }) => {
     const active = isActivePath(pathname, item.href);
     const Icon = item.icon;
-    const border = active ? "color-mix(in srgb, var(--pm-fg) 55%, transparent)" : "color-mix(in srgb, var(--pm-fg) 20%, transparent)";
-    const bg = active ? "color-mix(in srgb, var(--pm-fg) 16%, transparent)" : "color-mix(in srgb, var(--pm-fg) 6%, transparent)";
+    const border = active
+      ? "color-mix(in srgb, var(--pm-fg) 55%, transparent)"
+      : "color-mix(in srgb, var(--pm-fg) 20%, transparent)";
+    const bg = active
+      ? "color-mix(in srgb, var(--pm-fg) 16%, transparent)"
+      : "color-mix(in srgb, var(--pm-fg) 6%, transparent)";
 
     return (
       <Link
