@@ -1,1 +1,1 @@
-export { default } from "@/app/user/settings/page";
+export { default } from "@/app/agent/theme/page";

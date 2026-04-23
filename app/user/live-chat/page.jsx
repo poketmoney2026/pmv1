@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Funnel_Display } from "next/font/google";
 import { Clock3, ImagePlus, Loader2, SendHorizontal, X } from "lucide-react";
@@ -104,7 +104,7 @@ function ChatModal({ open, onClose, pm, loading, messages, text, onChangeText, s
       <div className="flex h-[min(86vh,760px)] w-full max-w-2xl flex-col overflow-hidden border shadow-2xl" style={{ borderColor: pm.b28, background: "var(--pm-bg)", color: pm.fg }}>
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: pm.b20 }}>
           <div>
-            <div className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg70 }}>Live Chat</div>
+            <div className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg70 }}>Live Support</div>
             <div className="mt-1 text-base font-black tracking-widest uppercase">{supportAdmin?.fullName || "Admin Support"}</div>
             <div className="mt-1 text-[11px] font-black tracking-[0.24em] uppercase" style={{ color: pm.fg70 }}>{supportAdmin?.label || "Admin"}</div>
             <PresenceRow pm={pm} presence={supportAdmin?.presence} now={liveNow} />
@@ -118,7 +118,7 @@ function ChatModal({ open, onClose, pm, loading, messages, text, onChangeText, s
             return <div key={m._id} className={`flex ${mine ? "justify-end" : "justify-start"}`}><div className="max-w-[85%] border px-3 py-2 text-sm" style={{ borderColor: pm.b20, background: mine ? pm.greenBg : pm.bg08 }}><div className="text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>{mine ? "You" : (supportAdmin?.fullName || "Admin")}</div>{!mine ? <div className="text-[10px] font-black tracking-[0.24em] uppercase" style={{ color: pm.fg70 }}>{supportAdmin?.label || "Admin"}</div> : null}{m.message ? <div className="mt-1 whitespace-pre-wrap">{m.message}</div> : null}{m.imageUrl ? <img src={m.imageUrl} alt="Chat upload" className="mt-2 max-h-40 rounded border object-cover" style={{ borderColor: pm.b20 }} /> : null}<div className="mt-1 text-[10px]" style={{ color: pm.fg70 }}>{m.createdAt ? new Date(m.createdAt).toLocaleString() : ""}</div></div></div>;
           })}
         </div>
-        <div className="min-h-6 px-4">{peerTyping ? <TypingIndicator pm={pm} label="Admin typing" /> : null}</div>
+        <div className="min-h-6 px-4">{peerTyping ? <TypingIndicator pm={pm} label={`${supportAdmin?.fullName || "Admin"} typing`} /> : null}</div>
         {imagePreview ? <div className="border-t px-4 py-2" style={{ borderColor: pm.b20, background: pm.bg08 }}><div className="mb-2 text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>Image Preview</div><div className="flex items-start gap-3"><img src={imagePreview} alt="Preview" className="h-16 w-16 rounded border object-cover" style={{ borderColor: pm.b20 }} /><button type="button" onClick={clearImage} className="h-10 border px-3 text-[10px] font-black tracking-widest uppercase" style={{ borderColor: pm.b20, background: pm.bg10, color: pm.fg }}>Remove</button></div></div> : null}
         <div className="border-t px-4 py-3" style={{ borderColor: pm.b20 }}><div className="flex items-stretch gap-2"><input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onPickImage(e.target.files?.[0] || null)} /><button type="button" onClick={() => fileInputRef.current?.click()} disabled={imageUploading || sending} className="grid h-12 w-12 shrink-0 place-items-center border disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }} aria-label="Upload image">{imageUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}</button><textarea rows={1} value={text} onChange={(e) => onChangeText(e.target.value)} className="h-12 min-h-12 max-h-12 flex-1 resize-none border px-3 py-3 text-sm outline-none" style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg }} placeholder="Write your message..." /><button type="button" onClick={send} disabled={(!text.trim() && !imagePreview) || sending || loading || imageUploading} className="grid h-12 w-12 shrink-0 place-items-center border disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}</button></div></div>
       </div>
@@ -148,7 +148,19 @@ export default function UserLiveChatPage() {
   const firstMessageSentRef = useRef(false);
   const typingTimeoutRef = useRef(null);
 
-  const scrollBottom = () => setTimeout(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, 30);
+
+const scrollBottom = useCallback((behavior = "auto") => {
+  const run = () => {
+    const el = listRef.current;
+    if (!el) return;
+    try {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    } catch {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+}, []);
   const sameMessages = (a = [], b = []) => a.length === b.length && a.every((row, index) => String(row?._id || "") === String(b[index]?._id || "") && String(row?.updatedAt || row?.createdAt || "") === String(b[index]?.updatedAt || b[index]?.createdAt || ""));
 
   const loadThread = async () => {
@@ -158,6 +170,11 @@ export default function UserLiveChatPage() {
     const nextThreadId = data?.data?._id || "";
     setThreadId(nextThreadId);
     setSupportAdmin(data?.data?.supportAdmin || null);
+    try {
+      if (nextThreadId && socketRef.current?.connected) {
+        socketRef.current.emit("chat:join", { threadId: nextThreadId, role: "user" });
+      }
+    } catch {}
     return nextThreadId;
   };
 
@@ -171,12 +188,22 @@ export default function UserLiveChatPage() {
     const rows = Array.isArray(data?.data) ? data.data : [];
     setMessages((prev) => {
       if (sameMessages(prev, rows)) return prev;
-      setTimeout(() => scrollBottom(), 30);
+      scrollBottom("auto");
       return rows;
     });
   };
 
   useEffect(() => { let alive = true; (async () => { setLoading(true); try { const tid = await loadThread(); if (!alive) return; await loadMessages(tid, false); } catch (e) { if (alive) toast.error(e?.message || "Load failed"); } finally { if (alive) setLoading(false); } })(); return () => { alive = false; }; }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    scrollBottom("auto");
+  }, [open, messages.length, loading, scrollBottom]);
+
+  useEffect(() => {
+    if (!threadId || !socketRef.current?.connected) return;
+    try { socketRef.current.emit("chat:join", { threadId, role: "user" }); } catch {}
+  }, [threadId, open]);
 
   useEffect(() => {
     let interval; let mounted = true;
@@ -275,7 +302,7 @@ export default function UserLiveChatPage() {
   return (
     <div className={`${funnelDisplay.className} min-h-screen px-4 py-6 pt-16 md:pt-6`} style={{ background: "var(--pm-bg-grad)", color: pm.fg, fontFamily: "var(--pm-font)" }}>
       <div className="mx-auto max-w-md space-y-3">
-        <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}><div className="flex items-center justify-between gap-3"><div><div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>User</div><div className="mt-1 text-lg font-black tracking-widest uppercase">Live Chat</div></div><span className="grid h-11 w-11 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}><FaWhatsapp className="h-5 w-5" /></span></div></div>
+        <div className="border p-3" style={{ borderColor: pm.b28, background: pm.bg06 }}><div className="flex items-center justify-between gap-3"><div><div className="text-[11px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>User</div><div className="mt-1 text-lg font-black tracking-widest uppercase">Live Support</div></div><span className="grid h-11 w-11 place-items-center border" style={{ borderColor: pm.b28, background: pm.bg10 }}><FaWhatsapp className="h-5 w-5" /></span></div></div>
         <button type="button" onClick={openModal} className="w-full border px-4 py-4 text-left" style={{ borderColor: pm.b28, background: pm.bg06, color: pm.fg, boxShadow: `0 0 0 1px ${pm.b20}` }}>
           <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-full border" style={{ borderColor: pm.b28, background: pm.bg10 }}><FaWhatsapp className="h-5 w-5" /></span><span className="min-w-0"><span className="block text-base font-black tracking-widest uppercase">{supportAdmin?.fullName || "Admin Support"}</span><span className="mt-1 block text-[10px] font-black tracking-[0.3em] uppercase" style={{ color: pm.fg70 }}>{supportAdmin?.label || "Admin"}</span><PresenceRow pm={pm} presence={supportAdmin?.presence} now={liveNow} /></span></div>
         </button>

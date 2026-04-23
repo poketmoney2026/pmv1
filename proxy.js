@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const PUBLIC_ROUTES = ["/user/signup", "/user/signin"];
-const USER_BASE_ROUTES = ["/", "/user/deposit", "/user/withdraw", "/user/profile", "/user/settings", "/user/contact", "/user/help", "/user/transactions", "/user/income-calculate", "/user/download", "/user/plan-and-balance-claim", "/user/leaderboard", "/user/referral", "/user/notice", "/user/live-chat"];
+const USER_BASE_ROUTES = ["/", "/user/deposit", "/user/withdraw", "/user/profile", "/user/settings", "/user/theme", "/user/sound", "/user/contact", "/user/help", "/user/transactions", "/user/income-calculate", "/user/download", "/user/plan-and-balance-claim", "/user/leaderboard", "/user/referral", "/user/notice", "/user/live-chat"];
 const ADMIN_BASE_ROUTES = ["/admin/interest", "/admin/addbalance", "/admin/links", "/admin/general", "/admin/theme", "/admin/transactions", "/admin/documents", "/admin/download", "/admin/analytics", "/admin/help", "/admin/site-updating", "/admin/withdraws", "/admin/users", "/admin/approve-deposit", "/admin/payment-methods", "/admin/notice", "/admin/live-chat", "/admin/leaderboard", "/admin/referral", "/admin/roles"];
-const AGENT_BASE_ROUTES = ["/agent", "/agent/deposit-verify", "/agent/deposit", "/agent/withdraw", "/agent/transactions", "/agent/transaction", "/agent/profile", "/agent/referral", "/agent/help", "/agent/settings", "/agent/live-chat", "/agent/notice", "/agent/download", "/agent/download-apps"];
+const AGENT_BASE_ROUTES = ["/agent", "/agent/deposit-verify", "/agent/deposit", "/agent/withdraw", "/agent/transactions", "/agent/transaction", "/agent/profile", "/agent/referral", "/agent/help", "/agent/settings", "/agent/theme", "/agent/sound", "/agent/live-chat", "/agent/notice", "/agent/download", "/agent/download-apps"];
 
 function isSkippablePath(pathname) {
   return pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/assets') || pathname.startsWith('/apps') || pathname === '/favicon.ico' || pathname === '/robots.txt' || pathname === '/sitemap.xml' || /\/[\w.-]+\.[a-zA-Z0-9]+$/.test(pathname);

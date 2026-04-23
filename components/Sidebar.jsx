@@ -32,6 +32,7 @@ import {
   Activity,
   HelpCircle,
   Palette,
+  Volume2,
 } from "lucide-react";
 import { Calculator } from "lucide-react";
 import { FiCreditCard, FiLayers } from "react-icons/fi";
@@ -41,20 +42,21 @@ const funnelDisplay = Funnel_Display({ subsets: ["latin"], weight: ["400", "700"
 
 const USER_MENU = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Deposit", href: "/user/deposit", icon: Wallet },
-  { name: "Balance Claim", href: "/user/plan-and-balance-claim", icon: FiLayers },
   { name: "Leaderboard", href: "/user/leaderboard", icon: Trophy },
-  { name: "Referral", href: "/user/referral", icon: Users2 },
-  { name: "Contact", href: "/user/contact", icon: LifeBuoy },
-  { name: "Help", href: "/user/help", icon: HelpCircle },
+  { name: "Deposit", href: "/user/deposit", icon: Wallet },
   { name: "Withdraw", href: "/user/withdraw", icon: ArrowDownToLine },
+  { name: "Live Support", href: "/user/live-chat", icon: MessageCircle },
+  { name: "Balance Box", href: "/user/plan-and-balance-claim", icon: FiLayers },
+  { name: "Referral", href: "/user/referral", icon: Users2 },
   { name: "Profile", href: "/user/profile", icon: User },
   { name: "Transactions", href: "/user/transactions", icon: Receipt },
-  { name: "Income Calc", href: "/user/income-calculate", icon: Calculator },
-  { name: "Settings", href: "/user/settings", icon: Settings },
-  { name: "Notice", href: "/user/notice", icon: Bell },
-  { name: "Live Chat", href: "/user/live-chat", icon: MessageCircle },
+  { name: "Calculator", href: "/user/income-calculate", icon: Calculator },
   { name: "Download App", href: "/user/download", icon: Download },
+  { name: "Contact", href: "/user/contact", icon: LifeBuoy },
+  { name: "Notice", href: "/user/notice", icon: Bell },
+  { name: "Theme", href: "/user/theme", icon: Palette },
+  { name: "Sound", href: "/user/sound", icon: Volume2 },
+  { name: "Help", href: "/user/help", icon: HelpCircle },
 ];
 
 const ADMIN_MENU = [
@@ -90,7 +92,8 @@ const AGENT_MENU = [
   { name: "Notice", href: "/agent/notice", icon: Bell },
   { name: "Live Chat", href: "/agent/live-chat", icon: MessageCircle },
   { name: "Help", href: "/agent/help", icon: HelpCircle },
-  { name: "Settings", href: "/agent/settings", icon: Settings },
+  { name: "Theme", href: "/agent/theme", icon: Palette },
+  { name: "Sound", href: "/agent/sound", icon: Volume2 },
   { name: "Download App", href: "/agent/download", icon: Download },
 ];
 

@@ -684,17 +684,17 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-2">
             <div className="border px-2 py-3 text-center" style={{ borderColor: "rgba(16,185,129,0.45)", background: "rgba(16,185,129,0.12)", boxShadow: "0 0 0 1px rgba(16,185,129,0.18) inset" }}>
               <div className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: "rgba(167,243,208,0.95)" }}>Running</div>
-              <div className="mt-2 text-xl font-black leading-none" style={{ color: "var(--pm-fg)" }}>{runningCount}</div>
+              <div className="mt-2 text-[1.45rem] font-black leading-none md:text-[1.6rem]" style={{ color: "var(--pm-fg)" }}>{runningCount}</div>
               <div className="mt-1 text-[9px] tracking-wide" style={{ color: "color-mix(in srgb, var(--pm-fg) 72%, transparent)" }}>Deposits</div>
             </div>
             <div className="border px-2 py-3 text-center" style={{ borderColor: "rgba(59,130,246,0.45)", background: "rgba(59,130,246,0.12)", boxShadow: "0 0 0 1px rgba(59,130,246,0.18) inset" }}>
               <div className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: "rgba(191,219,254,0.95)" }}>Rate</div>
-              <div className="mt-2 text-xl font-black leading-none" style={{ color: "var(--pm-fg)" }}>{Number(interestPercent || 0)}%</div>
+              <div className="mt-2 text-[1.45rem] font-black leading-none md:text-[1.6rem]" style={{ color: "var(--pm-fg)" }}>{Number(interestPercent || 0)}%</div>
               <div className="mt-1 text-[9px] tracking-wide" style={{ color: "color-mix(in srgb, var(--pm-fg) 72%, transparent)" }}>Daily</div>
             </div>
             <div className="border px-2 py-3 text-center" style={{ borderColor: "rgba(234,179,8,0.45)", background: "rgba(234,179,8,0.12)", boxShadow: "0 0 0 1px rgba(234,179,8,0.18) inset" }}>
               <div className="text-[9px] font-black tracking-[0.2em] uppercase" style={{ color: "rgba(254,240,138,0.95)" }}>Plan</div>
-              <div className="mt-2 text-xl font-black leading-none" style={{ color: "var(--pm-fg)" }}>{planDays || 0}</div>
+              <div className="mt-2 text-[1.45rem] font-black leading-none md:text-[1.6rem]" style={{ color: "var(--pm-fg)" }}>{planDays || 0}</div>
               <div className="mt-1 text-[9px] tracking-wide" style={{ color: "color-mix(in srgb, var(--pm-fg) 72%, transparent)" }}>Days</div>
             </div>
           </div>

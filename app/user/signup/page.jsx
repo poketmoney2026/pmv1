@@ -24,7 +24,6 @@ const BD_PHONE_RE = /^01\d{9}$/;
 function usePM() {
   return useMemo(
     () => ({
-      bg: "var(--pm-bg)",
       fg: "var(--pm-fg)",
       fg60: "color-mix(in srgb, var(--pm-fg) 60%, transparent)",
       fg70: "color-mix(in srgb, var(--pm-fg) 70%, transparent)",
@@ -37,8 +36,13 @@ function usePM() {
       b12: "color-mix(in srgb, var(--pm-fg) 12%, transparent)",
       b16: "color-mix(in srgb, var(--pm-fg) 16%, transparent)",
       b20: "color-mix(in srgb, var(--pm-fg) 20%, transparent)",
+      b22: "color-mix(in srgb, var(--pm-fg) 22%, transparent)",
       b26: "color-mix(in srgb, var(--pm-fg) 26%, transparent)",
+      b28: "color-mix(in srgb, var(--pm-fg) 28%, transparent)",
       b35: "color-mix(in srgb, var(--pm-fg) 35%, transparent)",
+      bg05: "color-mix(in srgb, var(--pm-fg) 5%, transparent)",
+      bg06: "color-mix(in srgb, var(--pm-fg) 6%, transparent)",
+      bg10: "color-mix(in srgb, var(--pm-fg) 10%, transparent)",
       ok: "var(--pm-ok)",
       bad: "var(--pm-bad)",
     }),
@@ -46,14 +50,15 @@ function usePM() {
   );
 }
 
+
 function PMGlobals() {
   return (
     <style jsx global>{`
       :root {
         --pm-bg: #0b0b0b;
         --pm-fg: #ffffff;
-        --pm-font: ${funnelDisplay.style.fontFamily}, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", "Courier New", monospace;
+        --pm-bg-grad: linear-gradient(180deg, #0b0b0b 0%, #050505 100%);
+        --pm-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         --pm-ok: #22c55e;
         --pm-bad: #ef4444;
       }
@@ -71,14 +76,15 @@ function PMGlobals() {
   );
 }
 
+
 function Block({ title, children, pm }) {
   return (
     <div
       className="select-none border p-3"
       style={{
-        borderColor: pm.b20,
-        background: pm.b06,
-        boxShadow: `0 0 0 1px ${pm.b10}`,
+        borderColor: pm.b28,
+        background: pm.bg06,
+        boxShadow: `0 0 0 1px ${pm.b22}`,
       }}
     >
       <div className="mb-2 text-center text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg90 }}>
@@ -92,7 +98,7 @@ function Block({ title, children, pm }) {
 function Field({ icon: Icon, label, placeholder, value, onChange, type = "text", rightSlot, disabled = false, inputMode, maxLength, autoComplete, pm }) {
   return (
     <div className="select-none">
-      <div className="mb-1.5 text-[10px] font-bold tracking-widest uppercase" style={{ color: pm.fg75 }}>
+      <div className="mb-2 text-[11px] font-bold tracking-widest uppercase" style={{ color: pm.fg80 }}>
         {label}
       </div>
       <div className="relative">
@@ -108,11 +114,11 @@ function Field({ icon: Icon, label, placeholder, value, onChange, type = "text",
           inputMode={inputMode}
           maxLength={maxLength}
           autoComplete={autoComplete}
-          className={["w-full select-text border px-3 py-2.5 text-[13px] outline-none", "pl-9", rightSlot ? "pr-11" : ""].join(" ")}
+          className={["w-full select-text border px-4 py-3 text-sm outline-none", "pl-10", rightSlot ? "pr-12" : ""].join(" ")}
           style={{
-            borderColor: disabled ? pm.b16 : pm.b20,
-            background: "color-mix(in srgb, var(--pm-bg) 60%, black)",
-            color: pm.fg,
+            borderColor: disabled ? pm.b12 : pm.b28,
+            background: disabled ? pm.bg05 : pm.bg10,
+            color: disabled ? pm.fg70 : pm.fg,
             opacity: disabled ? 0.75 : 1,
             cursor: disabled ? "not-allowed" : "text",
           }}
@@ -209,10 +215,9 @@ function SignupForm() {
   };
 
   return (
-    <div className={`${funnelDisplay.className} min-h-[100svh] overflow-hidden px-3 py-6 font-medium`} style={{ background: "var(--pm-bg)", color: pm.fg }}>
+    <div className={`${funnelDisplay.className} relative h-[100svh] overflow-hidden grid place-items-center px-4 py-6 font-medium`} style={{ background: "var(--pm-bg-grad)", color: pm.fg, fontFamily: "var(--pm-font)" }}>
       <PMGlobals />
-      <div className="mx-auto flex min-h-[calc(100svh-3rem)] w-full max-w-md items-center">
-        <div className="w-full space-y-3">
+      <div className="w-full max-w-md space-y-3 font-mono text-white">
           <Block title="SIGN UP" pm={pm}>
             <div className="space-y-3">
               <Field pm={pm} icon={User} label="FULL NAME" placeholder="Enter your full name" value={fullName} onChange={(e) => { setFullNameTouched(true); setFullName(e.target.value); }} autoComplete="name" disabled={loading} />
@@ -221,12 +226,12 @@ function SignupForm() {
               <Field pm={pm} icon={Phone} label="MOBILE NUMBER" placeholder="01XXXXXXXXX" value={phone} onChange={(e) => { setPhoneTouched(true); setPhone(String(e.target.value || "").replace(/\D/g, "").slice(0, 11)); }} inputMode="numeric" maxLength={11} autoComplete="tel" disabled={loading} />
               <ValidateLine pm={pm} touched={phoneTouched} ok={phoneValid} warnText="Invalid number" tipText="11 digits, starts with 01." />
 
-              <Field pm={pm} icon={Lock} label="PASSWORD" placeholder="Minimum 8 characters" value={password} onChange={(e) => { setPassTouched(true); setPassword(e.target.value); }} type={showPass ? "text" : "password"} autoComplete="new-password" disabled={loading} rightSlot={<button type="button" disabled={loading} onClick={() => setShowPass((s) => !s)} className="border p-2 active:scale-[0.98] disabled:opacity-60" style={{ borderColor: pm.b20, background: pm.b06, color: pm.fg85 }} aria-label={showPass ? "Hide password" : "Show password"}>{showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>} />
+              <Field pm={pm} icon={Lock} label="PASSWORD" placeholder="Minimum 8 characters" value={password} onChange={(e) => { setPassTouched(true); setPassword(e.target.value); }} type={showPass ? "text" : "password"} autoComplete="new-password" disabled={loading} rightSlot={<button type="button" disabled={loading} onClick={() => setShowPass((s) => !s)} className="border p-2 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed" style={{ borderColor: pm.b22, background: pm.bg10, color: pm.fg85 }} aria-label={showPass ? "Hide password" : "Show password"}>{showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>} />
               <ValidateLine pm={pm} touched={passTouched} ok={passwordValid} warnText="Password too short" tipText="Minimum 8 characters required." />
 
               <Field pm={pm} icon={Gift} label="REFERRAL CODE" placeholder="Optional referral code" value={referralCode} onChange={(e) => setReferralCode(String(e.target.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12))} autoComplete="off" disabled={loading} />
 
-              <button type="button" onClick={handleSignup} disabled={!canSubmit} className="w-full border py-3 text-[13px] font-black tracking-widest uppercase active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: pm.b20, background: pm.b06, color: pm.fg }}>
+              <button type="button" onClick={handleSignup} disabled={!canSubmit} className="w-full border py-3 text-[13px] font-black tracking-widest uppercase active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>
                 <span className="inline-flex items-center justify-center gap-2">
                   {loading ? <><Loader2 className="h-4 w-4 animate-spin" />PROCESSING...</> : <>SIGN UP <ArrowRight className="h-4 w-4" /></>}
                 </span>
@@ -234,13 +239,12 @@ function SignupForm() {
             </div>
           </Block>
 
-          <div className="select-none text-center text-[12px]" style={{ color: pm.fg80 }}>
+          <div className="select-none text-[12px]" style={{ color: pm.fg80 }}>
             Already have an account? {" "}
             <Link href="/user/signin" className="font-black underline underline-offset-4" style={{ color: pm.fg }}>
               SIGN IN
             </Link>
           </div>
-        </div>
       </div>
     </div>
   );

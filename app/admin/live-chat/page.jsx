@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Funnel_Display } from "next/font/google";
 import { Loader2, MessageCircle, SendHorizontal, X } from "lucide-react";
@@ -76,7 +76,7 @@ function ChatModal({ open, onClose, pm, activeThread, messages, loadingMessages,
             return <div key={m._id} className={`flex ${mine ? "justify-end" : "justify-start"}`}><div className="max-w-[85%] border px-3 py-2 text-sm" style={{ borderColor: pm.b20, background: mine ? pm.greenBg : pm.bg08 }}><div className="text-[10px] font-black tracking-widest uppercase" style={{ color: pm.fg70 }}>{mine ? "Admin" : (activeThread?.user?.fullName || "User")}</div>{!mine ? <div className="text-[10px] font-black tracking-[0.24em] uppercase" style={{ color: pm.fg70 }}>{activeThread?.user?.label || "User"}</div> : null}{m.message ? <div className="mt-1 whitespace-pre-wrap">{m.message}</div> : null}{m.imageUrl ? <img src={m.imageUrl} alt="Chat upload" className="mt-2 max-h-40 rounded border object-cover pointer-events-none select-none" style={{ borderColor: pm.b20 }} /> : null}<div className="mt-1 text-[10px]" style={{ color: pm.fg70 }}>{m.createdAt ? new Date(m.createdAt).toLocaleString() : ""}</div></div></div>;
           })}
         </div>
-        <div className="min-h-6 px-4">{peerTyping ? <TypingIndicator pm={pm} label="User typing" /> : null}</div>
+        <div className="min-h-6 px-4">{peerTyping ? <TypingIndicator pm={pm} label={`${activeThread?.user?.fullName || "User"} typing`} /> : null}</div>
         <div className="border-t px-4 py-3" style={{ borderColor: pm.b20 }}><div className="flex items-stretch gap-2"><textarea rows={1} value={text} onChange={(e) => onChangeText(e.target.value)} className="h-12 min-h-12 max-h-12 flex-1 resize-none border px-3 py-3 text-sm outline-none" style={{ borderColor: pm.b20, background: pm.bg08, color: pm.fg }} placeholder="Write your message..." /><button type="button" onClick={send} disabled={!text.trim() || sending || loadingMessages} className="grid h-12 w-12 shrink-0 place-items-center border disabled:opacity-60" style={{ borderColor: pm.b28, background: pm.bg10, color: pm.fg }}>{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}</button></div></div>
       </div>
     </div>
@@ -100,7 +100,19 @@ export default function AdminLiveChatPage() {
   const typingTimeoutRef = useRef(null);
 
   const sortThreads = (items) => [...items].sort((a, b) => new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime());
-  const scrollBottom = () => setTimeout(() => { const el = listRef.current; if (el) el.scrollTop = el.scrollHeight; }, 50);
+
+const scrollBottom = useCallback((behavior = "auto") => {
+  const run = () => {
+    const el = listRef.current;
+    if (!el) return;
+    try {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    } catch {
+      el.scrollTop = el.scrollHeight;
+    }
+  };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+}, []);
   const sameThreads = (a = [], b = []) => a.length === b.length && a.every((row, index) => String(row?._id || "") === String(b[index]?._id || "") && Number(row?.unreadByAdmin || 0) === Number(b[index]?.unreadByAdmin || 0) && String(row?.lastMessageAt || "") === String(b[index]?.lastMessageAt || "") && String(row?.user?.presence?.lastSeenAt || "") === String(b[index]?.user?.presence?.lastSeenAt || "") && Boolean(row?.user?.presence?.isOnline) === Boolean(b[index]?.user?.presence?.isOnline));
   const sameMessages = (a = [], b = []) => a.length === b.length && a.every((row, index) => String(row?._id || "") === String(b[index]?._id || "") && String(row?.updatedAt || row?.createdAt || "") === String(b[index]?.updatedAt || b[index]?.createdAt || ""));
 
@@ -123,7 +135,7 @@ export default function AdminLiveChatPage() {
     const rows = Array.isArray(data?.data) ? data.data : [];
     setMessages((prev) => {
       if (sameMessages(prev, rows)) return prev;
-      setTimeout(() => scrollBottom(), 30);
+      scrollBottom("auto");
       return rows;
     });
   };
@@ -138,6 +150,16 @@ export default function AdminLiveChatPage() {
   }, []);
 
   useEffect(() => {
+    if (!open) return;
+    scrollBottom("auto");
+  }, [open, messages.length, loadingMessages, activeThread?._id, scrollBottom]);
+
+  useEffect(() => {
+    if (!activeThread?._id || !socketRef.current?.connected) return;
+    try { socketRef.current.emit("chat:join", { threadId: activeThread._id, role: "admin" }); } catch {}
+  }, [activeThread?._id, open]);
+
+  useEffect(() => {
     let interval;
     let mounted = true;
     (async () => {
@@ -149,6 +171,7 @@ export default function AdminLiveChatPage() {
         socket.on("connect", () => { if (activeThread?._id) socket.emit("chat:join", { threadId: activeThread._id, role: "admin" }); });
         socket.on("chat:new", async (payload) => {
           await loadThreads().catch(() => {});
+      scrollBottom("auto");
           if (payload?.threadId && payload.threadId === activeThread?._id && open) loadMessages(payload.threadId, true).catch(() => {});
         });
         socket.on("chat:typing", (payload) => {
@@ -174,6 +197,7 @@ export default function AdminLiveChatPage() {
       await loadMessages(thread._id, true);
       if (socketRef.current?.connected) socketRef.current.emit("chat:join", { threadId: thread._id, role: "admin" });
       await loadThreads().catch(() => {});
+      scrollBottom("auto");
     } catch (e) { toast.error(e?.message || "Failed to load messages"); } finally { setLoadingMessages(false); }
   };
 
@@ -196,6 +220,7 @@ export default function AdminLiveChatPage() {
       try { socketRef.current?.emit("chat:stop-typing", { threadId: activeThread._id, senderRole: "admin" }); } catch {}
       await loadMessages(activeThread._id, true);
       await loadThreads().catch(() => {});
+      scrollBottom("auto");
       try { socketRef.current?.emit("chat:notify", { threadId: activeThread._id }); } catch {}
     } catch { toast.error("Network error"); } finally { setSending(false); }
   };
